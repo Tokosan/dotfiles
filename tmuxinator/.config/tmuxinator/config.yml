@@ -54,11 +54,11 @@ windows:
   - bash:
     - config-bash
   - system:
-    - cd ~/.config
+    - cd ~/dotfiles/
     - nvim .
   - tmuxinator:
     - cd ~/.config/tmuxinator/
     - nvim .
   - git:
-    - cd ~/.config
+    - cd ~/dotfiles
     - lazygit
