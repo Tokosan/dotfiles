@@ -1,0 +1,22 @@
+# /Users/tokosan/.config/tmuxinator/cero.yml
+
+name: cero
+root: ~/Documents/Cero/repos/
+
+windows:
+  - botlab:
+    - cd botlab-encuestas && nvim .
+  - repos:
+    - cd repos && nvim .
+  - git:
+      panes:
+        - botlab:
+          - cd botlab-encuestas
+        - integracion:
+  - prod:
+      layout: main-vertical
+      panes:
+        - prod:
+          - ssh prod
+        - ~
+        - ~
