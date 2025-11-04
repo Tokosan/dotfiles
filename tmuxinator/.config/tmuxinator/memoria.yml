@@ -1,7 +1,7 @@
 # /home/tokosan/.config/tmuxinator/memoria.yml
 
 name: memoria
-root: ~/Documents/Personal/memoria/
+root: ~/Documents/memoria/
 
 windows:
   - project:
