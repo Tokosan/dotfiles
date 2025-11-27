@@ -1,83 +1,43 @@
-@import "../omarchy/current/theme/waybar.css";
+@define-color primary #96d8ff;
+@define-color background rgba(21, 18, 27, 0.8);
 
+/* All Modules */
 * {
-  background-color: @background;
-  color: @foreground;
-
-  border: none;
-  border-radius: 0;
-  min-height: 0;
-  font-family: 'CaskaydiaMono Nerd Font';
-  font-size: 12px;
+  font-family: "JetBrainsMono Nerd Font";
+  font-weight: bold;
+  font-size: 15px;
+  background: rgba(21, 18, 27, 0);
 }
 
-.modules-left {
-  margin-left: 8px;
+window#waybar {
+  color: @primary;
+}
+tooltip {
+  background: @background;
+  border-radius: 10px;
+  border-width: 10px;
+  border-style: solid;
+  border-color: #11111b;
+}
+menu menuitem:hover {
+  background-color: rgba(150, 216, 255, 0.1);
+  border-color: @primary;
 }
 
-.modules-right {
-  margin-right: 8px;
-}
-
+/* Workspaces */
 #workspaces button {
-  all: initial;
-  padding: 0 6px;
-  margin: 0 1.5px;
-  min-width: 9px;
+  color: #313244;
+}
+#workspaces button.active {
+  color: @primary;
+}
+#workspaces button:hover {
+  background: #010116;
+  color: #cdd6f4;
+  border-color: @primary;
+  border-radius: 10px;
 }
 
 #workspaces button.empty {
-  opacity: 0.5;
-}
-
-#cpu,
-#battery,
-#pulseaudio,
-#custom-omarchy,
-#custom-screenrecording-indicator,
-#custom-update {
-  min-width: 12px;
-  margin: 0 7.5px;
-}
-
-#tray {
-  margin-right: 16px;
-}
-
-#bluetooth {
-  margin-right: 17px;
-}
-
-#network {
-  margin-right: 13px;
-}
-
-#custom-expand-icon {
-  margin-right: 20px;
-}
-
-tooltip {
-  padding: 2px;
-}
-
-#custom-update {
-  font-size: 10px;
-}
-
-#clock {
-  margin-left: 8.75px;
-}
-
-.hidden {
-  opacity: 0;
-}
-
-#custom-screenrecording-indicator {
-  min-width: 12px;
-  margin-left: 8.75px;
-  font-size: 10px;
-}
-
-#custom-screenrecording-indicator.active {
-  color: #a55555;
+  color: #000;
 }

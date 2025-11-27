@@ -5,9 +5,8 @@
   "spacing": 0,
   "height": 26,
   "modules-left": ["hyprland/workspaces"],
-  "modules-center": ["custom/update", "custom/screenrecording-indicator"],
+  "modules-center": ["custom/screenrecording-indicator"],
   "modules-right": [
-    "network",
     "pulseaudio",
     "cpu",
     "clock",
@@ -17,8 +16,8 @@
     "format": "{icon}",
     "format-icons": {
       "default": "",
-      "2": "2",
       "1": "",
+      "2": "2",
       "3": "3",
       "4": "4",
       "5": "5",
