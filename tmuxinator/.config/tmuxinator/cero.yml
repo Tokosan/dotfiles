@@ -13,10 +13,17 @@ windows:
         - botlab:
           - cd botlab-encuestas
         - integracion:
-  - prod:
-      layout: main-vertical
+  - incidencias:
       panes:
-        - prod:
-          - ssh prod
+        - ~
+        - ~
+        - ~
+        - ~
+  - remote:
+      panes:
+        - ~
+        - ~
+  - nightly:
+      panes:
         - ~
         - ~
