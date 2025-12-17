@@ -1,12 +1,12 @@
 @define-color primary #96d8ff;
-@define-color background rgba(21, 18, 27, 0.8);
+@define-color background #11111b;
 
 /* All Modules */
 * {
   font-family: "JetBrainsMono Nerd Font";
   font-weight: bold;
   font-size: 15px;
-  background: rgba(21, 18, 27, 0);
+  background: #11111b;
 }
 
 window#waybar {
