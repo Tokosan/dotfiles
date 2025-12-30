@@ -1,0 +1,44 @@
+[user]
+  name = Tokosan
+  email = cteiba.al@gmail.com
+[core]
+  editor = nvim
+  whitespace = fix,-indent-with-non-tab,trailing-space,cr-at-eol
+  pager = delta
+[branch]
+  sort = -committerdate
+[init]
+  defaultBranch = main
+[checkout]
+  defaultRemote = origin
+[diff]
+  algorithm = histogram
+  colorMoved = plain
+  renames = true
+  tool = nvimdiff
+[push]
+  autoSetupRemote = true
+  followTags = true
+[fetch]
+  prune = true
+  pruneTags = true
+  all = true
+[color "branch"]
+  current = yellow bold
+  local = green bold
+  remote = cyan bold
+[color "diff"]
+  meta = yellow bold
+  frag = magenta bold
+  old = red bold
+  new = green bold
+  whitespace = red reverse
+[color "status"]
+  added = green bold
+  changed = yellow bold
+  untracked = red bold
+[alias]
+  done = push origin HEAD
+  s = status
+  main = !git checkout main && git fetch --all & git pull
+  new = !git main && git checkout -b
