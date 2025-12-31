@@ -1,0 +1,12 @@
+
+[Unit]
+Description=Elephant
+After=default.target
+
+[Service]
+Type=simple
+ExecStart=elephant
+Restart=always
+
+[Install]
+WantedBy=default.target
