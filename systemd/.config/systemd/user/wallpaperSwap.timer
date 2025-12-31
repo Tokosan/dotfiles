@@ -1,0 +1,10 @@
+[Unit]
+Description=Trigers wallpaper change
+Requires=wallpaperSwap.service
+
+[Timer]
+Unit=wallpaperSwap.service
+OnCalendar=*-*-* *:*:00
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,12 @@
+# Testing timer unit files (cron)
+
+[Unit]
+Description=Changes the wallpaper every 5 seconds
+Wants=wallpaperSwap.timer
+
+[Service]
+Type=oneshot
+ExecStart=/home/tokosan/bin/pick-random-wallpaper.sh
+
+[Install]
+WantedBy=multi-user.target
