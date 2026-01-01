@@ -1,5 +1,3 @@
--- NOTE: Plugins can specify dependencies.
---
 -- The dependencies are proper plugin specifications as well - anything
 -- you do for a plugin at the top level, you can do for a dependency.
 --
@@ -50,6 +48,12 @@ return { -- Fuzzy Finder (files, lsp, etc)
     -- [[ Configure Telescope ]]
     -- See `:help telescope` and `:help telescope.setup()`
     require('telescope').setup {
+      find_files = {
+        -- This is the default value, but you can change it to `true` if you want
+        -- to search hidden files by default.
+        hidden = true,
+      },
+      vimgrep_arguments = { 'rg', '--hidden', '--color=never', '--no-heading', '--with-filename', '--line-number', '--column', '--smart-case' },
       -- You can put your default mappings / updates / etc. in here
       --  All the info you're looking for is in `:help telescope.setup()`
       --
@@ -59,6 +63,7 @@ return { -- Fuzzy Finder (files, lsp, etc)
       --   },
       -- },
       -- pickers = {}
+      defaults = { vimgrep_arguments = { 'rg', '--hidden', '--color=never', '--no-heading', '--with-filename', '--line-number', '--column', '--smart-case' } },
       extensions = {
         ['ui-select'] = {
           require('telescope.themes').get_dropdown(),
@@ -78,10 +83,20 @@ return { -- Fuzzy Finder (files, lsp, etc)
     end, { desc = '[S]earch files in current [B]uffer directory' })
     vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp' })
     vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
-    vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = '[S]earch [F]iles' })
+    vim.keymap.set(
+      'n',
+      '<leader>sf',
+      "<cmd>lua require'telescope.builtin'.find_files({ find_command = {'rg', '--files', '--hidden', '-g', '!.git' }})<cr>",
+      { desc = '[S]earch [F]iles' }
+    )
     vim.keymap.set('n', '<leader>ss', builtin.builtin, { desc = '[S]earch [S]elect Telescope' })
     vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = '[S]earch current [W]ord' })
-    vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = '[S]earch by [G]rep' })
+    vim.keymap.set(
+      'n',
+      '<leader>sg',
+      "<cmd>lua require'telescope.builtin'.live_grep({ find_command = {'rg', '--files', '--hidden', '-g', '!.git' }})<cr>",
+      { desc = '[S]earch by [G]rep' }
+    )
     vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = '[S]earch [D]iagnostics' })
     vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
     vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
