@@ -1,0 +1,24 @@
+# /home/tokosan/.config/tmuxinator/config.yml
+
+name: config
+root: ~/
+
+windows:
+  - system:
+    - cd ~/.config/
+    - nvim .
+  - tmux:
+    - cd ~/.config/tmux/
+    - nvim tmux.conf
+  - shell:
+    - cd ~/dotfiles/zsh/
+    - nvim .
+  - dotfiles:
+    - cd ~/dotfiles/
+    - nvim .
+  - tmuxinator:
+    - cd ~/.config/tmuxinator/
+    - nvim .
+  - nvim:
+    - cd ~/.config/nvim
+    - nvim init.lua

@@ -1,0 +1,4 @@
+[mgr]
+show_hidden = true
+line_mode = "size"
+scroll_off = 5

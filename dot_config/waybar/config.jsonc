@@ -1,0 +1,153 @@
+// Top waybar: mediaplayer, system info, time
+{
+  "name": "top", // Waybar name
+  "layer": "top", // Waybar at top layer
+  "position": "top", // Waybar position (top|bottom|left|right)
+  // "width": 1280, // Waybar width
+  "spacing": 4, // Gaps between modules (4px)
+  // Choose the order of the modules
+  "modules-left": [
+    "custom/apps",
+    "hyprland/workspaces#left",
+    "hyprland/workspaces#right"
+  ],
+  "modules-center": [
+   "custom/media"
+  ],
+  "modules-right": [
+    "group/pulseaudio",
+    "group/monitor",
+    "tray",
+    "clock",
+    "custom/dashboard"
+  ],
+  "tray": {
+    "icon-size": 16,
+    "spacing": 8
+  },
+  "group/pulseaudio": {
+    "modules": ["pulseaudio#input", "pulseaudio#output"],
+    "orientation": "horizontal"
+  },
+    "custom/apps": {
+        "format": "",
+        "on-click": "qs ipc call launcher toggle",
+        "on-click-right": "qs ipc call wallpaper toggle",
+        "tooltip": false
+    },
+    "custom/dashboard": {
+        "format": "󰍜",
+        "on-click": "qs ipc call dashboard toggle",
+        "tooltip": false
+    },
+  "custom/media": {
+      "exec": "~/.config/waybar/scripts/media.sh",
+      "interval": 2,
+      "return-type": "json",
+      "format": "{text}",
+      "on-click": "playerctl play-pause",
+      "on-click-right": "quickshell ipc call music toggle",
+      "on-scroll-up": "pactl set-sink-volume $(pactl get-default-sink) +5%",
+      "on-scroll-down": "pactl set-sink-volume $(pactl get-default-sink) -5%"
+  },
+  "hyprland/workspaces#right": {
+    "format": "{windows}",
+    "format-window-separator": " ",
+    "window-rewrite-default": "",
+    "window-rewrite": {
+      "class<firefox>": "",
+      "web.whatsapp.com": "",
+      "class<org.telegram.desktop>": "",
+      "ghostty": "",
+      "title<Steam>": "",
+      "class<steam_app.*>": "󰖺",
+      "class<steam>": "",
+      "spotify": "",
+      "vesktop": ""
+    },
+    "persistent-only": true,
+    "persistent-workspaces": {
+      "DP-1": [5,6,7,8],
+      "HDMI-A-1": [5,6,7,8]
+    }
+  },
+  "hyprland/workspaces#left": {
+    "format": "{windows}",
+    "format-window-separator": " ",
+    "window-rewrite-default": "",
+    "window-rewrite": {
+      "class<firefox>": "",
+      "web.whatsapp.com": "",
+      "class<org.telegram.desktop>": "",
+      "ghostty": "",
+      "kitty": "",
+      "title<Steam>": "",
+      "class<steam_app.*>": "󰖺 ",
+      "class<steam>": "",
+      "spotify": "",
+      "vesktop": " "
+    },
+    "persistent-only": true,
+    "persistent-workspaces": {
+      "DP-1": [1,2,3,4],
+      "HDMI-A-1": [1,2,3,4]
+    }
+  },
+  "clock": {
+    "format": "{:%A, %d of %B    %H:%M:%S}",
+    "tooltip-format": "{:%Y-%m-%d}",
+    "interval": 1
+  },
+  "group/monitor": {
+    "modules": ["cpu", "memory", "custom/gpu"],
+    "orientation": "horizontal",
+    "on-click": "ghostty -e btop"
+  },
+  "cpu": {
+     //"format": " ",
+    "format": "CPU",
+    "tooltop-format": "Load: {load}\rCores: {cores}\rFrequency: {frequency}GHz\rUsage: {usage}%",
+    "interval": 1,
+    "states": {
+      "p5": 5, "p10": 10, "p15": 15, "p20": 20, "p25": 25,
+      "p30": 30, "p35": 35, "p40": 40, "p45": 45, "p50": 50,
+      "p55": 55, "p60": 60, "p65": 65, "p70": 70, "p75": 75,
+      "p80": 80, "p85": 85, "p90": 90, "p95": 95
+    }
+  },
+  "custom/gpu": {
+    // "format": "󰾲 ",
+    "format": "GPU",
+    "exec": "~/.config/waybar/scripts/gpu-usage.sh",
+    "return-type": "json",
+    "interval": 2 // Update every 2 seconds
+  },
+  "memory": {
+    "interval": 1,
+    "format": "RAM",
+    // "format": " ",
+    "states": {
+      "p0": 0, "p5": 5, "p10": 10, "p15": 15, "p20": 20, "p25": 25,
+      "p30": 30, "p35": 35, "p40": 40, "p45": 45, "p50": 50,
+      "p55": 55, "p60": 60, "p65": 65, "p70": 70, "p75": 75,
+      "p80": 80, "p85": 85, "p90": 90, "p95": 95
+    },
+    "tooltip-format": "Used: {used}GB ({percentage}%)\rFree: {avail}GB\rTotal: {total}GB"
+  },
+  "pulseaudio#input": {
+      "format": "{format_source}",
+      "format-source": "{volume}% ",
+      "format-source-muted": "---  ",
+      "on-click": "pulsemixer --toggle-mute --id 56"
+  },
+  "pulseaudio#output": {
+      "format": "{icon} {volume}%",
+      "format-muted": "---",
+      "format-icons": {
+        "default": ["", "", ""]
+      },
+      "on-click-right": "ghostty -e pulsemixer",
+      "on-click": "pulsemixer --toggle-mute",
+      "on-click-middle": "~/bin/toggle-audio.sh"
+  }
+}
