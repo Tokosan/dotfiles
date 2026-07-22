@@ -13,3 +13,6 @@ alias cat='bat -p'
 alias r='reload'
 alias @tokoserver='ssh tokoserver'
 alias @camelot='ssh camelot'
+{{- if eq .chezmoi.hostname "toko-cerobook" }}
+alias vm='gcloud compute ssh --project=ceroai --zone=southamerica-west1-a  --tunnel-through-iap'
+{{- end }}
