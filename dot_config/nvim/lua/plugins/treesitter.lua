@@ -6,6 +6,7 @@ return { -- Highlight, edit, and navigate code
       'bash',
       'c',
       'diff',
+      'graphql',
       'html',
       'lua',
       'luadoc',
