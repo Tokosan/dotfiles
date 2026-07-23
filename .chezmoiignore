@@ -1,0 +1,6 @@
+{{- if ne .chezmoi.os "linux" }}
+.config/hypr
+.config/waybar
+.config/rofi
+.config/swaync
+{{- end }}
