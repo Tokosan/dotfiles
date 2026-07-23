@@ -13,3 +13,4 @@ alias cat='bat -p'
 alias r='reload'
 alias @tokoserver='ssh tokoserver'
 alias @camelot='ssh camelot'
+alias ff="fastfetch"
