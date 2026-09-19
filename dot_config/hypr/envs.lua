@@ -1,0 +1,13 @@
+hl.env("GTK_THEME", "adw-gtk3-dark")
+hl.env("HYPRCURSOR_SIZE", "32")
+hl.env("HYPRCURSOR_THEME", "rose-pine-hyprcursor")
+hl.env("PATH", "$PATH:$HOME/bin/fol:$HOME/bin")
+hl.env("LIBVA_DRIVER_NAME", "nvidia")
+hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
+hl.env("NVD_BACKEND", "direct")
+hl.env("GBM_BACKEND", "nvidia-drm")
+hl.env("__NV_PRIME_RENDER_OFFLOAD", "1")
+-- Wallpaper variables
+hl.env("AWWW_TRANSITION_FPS", "165")
+hl.env("AWWW_TRANSITION", "center")
+hl.env("AWWW_TRANSITION_DURATION", "0.5")
