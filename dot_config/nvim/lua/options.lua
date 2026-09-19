@@ -4,13 +4,13 @@
 --  `:help vim.o`
 
 vim.o.number = true
-vim.o.relativenumber = true
-vim.o.mouse = 'a'
+vim.o.relativenumber = false
+vim.o.mouse = "a"
 -- Sync clipboard between OS and Neovim.
 --  Schedule the setting after `UiEnter` because it can increase startup-time.
 --  See `:help 'clipboard'`
 vim.schedule(function()
-  vim.o.clipboard = 'unnamedplus'
+	vim.o.clipboard = "unnamedplus"
 end)
 
 -- Enable break indent
@@ -24,7 +24,7 @@ vim.o.ignorecase = true
 vim.o.smartcase = true
 
 -- Keep signcolumn on by default
-vim.o.signcolumn = 'yes'
+vim.o.signcolumn = "yes"
 
 -- Decrease update time
 vim.o.updatetime = 250
@@ -53,10 +53,10 @@ vim.o.smarttab = true -- Insert spaces according to shiftwidth when using <Tab> 
 --   See `:help lua-options`
 --   and `:help lua-options-guide`
 vim.o.list = true
-vim.opt.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
+vim.opt.listchars = { tab = "» ", trail = "·", nbsp = "␣" }
 
 -- Preview substitutions live, as you type!
-vim.o.inccommand = 'split'
+vim.o.inccommand = "split"
 
 -- Show which line your cursor is on
 vim.o.cursorline = true
@@ -71,7 +71,7 @@ vim.o.conceallevel = 0
 -- See `:help 'confirm'`
 vim.o.confirm = true
 
-vim.opt.fillchars = { eob = ' ' }
+vim.opt.fillchars = { eob = " " }
 
 vim.o.showmode = false
 
