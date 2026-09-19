@@ -1,6 +1,6 @@
 local terminal = "kitty"
 local mainMod = "SUPER"
-local secondMod = "CTRL_SHIFT_ALT_SUPER"
+local secondMod = "CTRL + SHIFT + ALT + SUPER"
 
 -- Main bindings
 hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen(), { desc = "Fullscreen" })
