@@ -15,16 +15,64 @@ Item {
     required property bool expanded
 
     property real pillHeight: 26
+    // Cuánto tarda el porcentaje en aparecer o desvanecerse.
+    property real fadeDuration: 120
 
     implicitWidth: pill.implicitWidth
-    implicitHeight: pillHeight + (expanded ? expandedPct.implicitHeight + 3 : 0)
+    implicitHeight: pillHeight + extraHeight
 
-    Behavior on implicitHeight {
-        NumberAnimation {
-            duration: 200
-            easing.type: Easing.OutCubic
+    // El despliegue va por estados y no por Behavior: así el porcentaje se
+    // desvanece del todo antes de que la pill empiece a encogerse, en vez de
+    // animarse ambos a la vez y dejar el texto flotando un frame.
+    property real extraHeight: 0
+    property real pctOpacity: 0
+
+    states: [
+        State {
+            name: "expanded"
+            when: stat.expanded
+
+            PropertyChanges {
+                stat.extraHeight: expandedPct.implicitHeight + 3
+                stat.pctOpacity: 1
+            }
         }
-    }
+    ]
+
+    transitions: [
+        Transition {
+            to: "expanded"
+
+            SequentialAnimation {
+                NumberAnimation {
+                    property: "extraHeight"
+                    duration: 200
+                    easing.type: Easing.OutCubic
+                }
+
+                NumberAnimation {
+                    property: "pctOpacity"
+                    duration: stat.fadeDuration
+                }
+            }
+        },
+        Transition {
+            from: "expanded"
+
+            SequentialAnimation {
+                NumberAnimation {
+                    property: "pctOpacity"
+                    duration: stat.fadeDuration
+                }
+
+                NumberAnimation {
+                    property: "extraHeight"
+                    duration: 200
+                    easing.type: Easing.OutCubic
+                }
+            }
+        }
+    ]
 
     Rectangle {
         id: pill
@@ -96,7 +144,7 @@ Item {
         anchors.horizontalCenter: pill.horizontalCenter
 
         visible: opacity > 0
-        opacity: stat.expanded ? 1 : 0
+        opacity: stat.pctOpacity
 
         text: stat.value + "%"
         color: Colors.foreground
@@ -104,11 +152,7 @@ Item {
         font.pixelSize: 10
         font.bold: true
 
-        Behavior on opacity {
-            NumberAnimation {
-                duration: 200
-            }
-        }
+
     }
 
     TextMetrics {
