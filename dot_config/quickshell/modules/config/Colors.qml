@@ -33,6 +33,11 @@ Singleton {
     readonly property color workspaceActive: root.foreground
     readonly property color workspaceActiveBg: root.color4
     readonly property color workspaceHoverBg: Qt.alpha(root.foreground, 0.15)
+
+    // Alerta (mute). Es un rojo fijo y no un colorN de pywal: la paleta del
+    // wallpaper no garantiza un rojo (hoy color1 es verde) y se perdería la
+    // señal.
+    readonly property color alert: "#f38ba8"
     // Un workspace vacío es un círculo sólido, no un hueco.
     readonly property color workspaceEmptyBg: Qt.alpha(root.color4, 0.55)
 

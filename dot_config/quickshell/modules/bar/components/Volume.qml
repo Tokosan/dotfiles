@@ -60,15 +60,25 @@ Rectangle {
         MouseArea {
             // Ancho fijo con el máximo de ambos estados: el texto de mute es
             // un par de píxeles más ancho y si no la pill saltaría al mutear.
-            implicitWidth: Math.max(micText.implicitWidth, micMetrics.implicitWidth)
+            implicitWidth: Math.max(micText.implicitWidth, micMetrics.implicitWidth, micMetricsMuted.implicitWidth)
             implicitHeight: micText.implicitHeight
             cursorShape: Qt.PointingHandCursor
             onClicked: volume.toggleMute(volume.source)
             onWheel: wheel => volume.scrollVolume(volume.source, wheel.angleDelta.y)
 
-            // Solo para medir: nunca se dibuja.
+            // Solo para medir: nunca se dibuja. Hay dos porque el glifo de
+            // mute y el del micrófono activo no miden lo mismo, y el caso más
+            // ancho es el volumen de tres cifras.
             Text {
                 id: micMetrics
+                visible: false
+
+                text: "100% \u{f036c}"
+                font: micText.font
+            }
+
+            Text {
+                id: micMetricsMuted
                 visible: false
 
                 text: "--- \u{f036d}"
@@ -80,7 +90,7 @@ Rectangle {
                 anchors.centerIn: parent
 
                 text: volume.source?.audio?.muted ? "--- \u{f036d}" : volume.percent(volume.source) + "% \u{f036c}"
-                color: Colors.foreground
+                color: volume.source?.audio?.muted ? Colors.alert : Colors.foreground
                 font.family: "JetBrains Mono Nerd Font"
                 font.pixelSize: 13
                 font.bold: true
@@ -113,7 +123,7 @@ Rectangle {
                 readonly property string icon: volume.sink?.audio?.muted ? "\u{f075f}" : pct === 0 ? "\u{f075f}" : pct < 34 ? "\u{f057f}" : pct < 67 ? "\u{f0580}" : "\u{f057e}"
 
                 text: volume.sink?.audio?.muted ? icon + " ---" : icon + " " + pct + "%"
-                color: Colors.foreground
+                color: volume.sink?.audio?.muted ? Colors.alert : Colors.foreground
                 font.family: "JetBrains Mono Nerd Font"
                 font.pixelSize: 13
                 font.bold: true
