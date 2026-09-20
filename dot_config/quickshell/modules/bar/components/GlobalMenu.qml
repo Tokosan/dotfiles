@@ -48,7 +48,7 @@ Rectangle {
         MenuEntry {
             Layout.fillWidth: true
             icon: "\u{f03e}"
-            label: "Cambiar wallpaper"
+            label: "Wallpaper"
             onTriggered: menu.view = "wallpaper"
         }
 
@@ -69,14 +69,14 @@ Rectangle {
         MenuEntry {
             Layout.fillWidth: true
             icon: "\u{f021}"
-            label: "Reiniciar Hyprland"
+            label: "Restart Hyprland"
             enabled: false
         }
 
         MenuEntry {
             Layout.fillWidth: true
             icon: "\u{f011}"
-            label: "Apagar"
+            label: "Power off"
             enabled: false
         }
     }

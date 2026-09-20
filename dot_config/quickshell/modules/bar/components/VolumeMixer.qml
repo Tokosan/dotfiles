@@ -87,7 +87,7 @@ Rectangle {
         // ── Dispositivos de salida ────────────────────────────────────
         MixerHeader {
             Layout.fillWidth: true
-            text: "Dispositivos"
+            text: "Devices"
         }
 
         Repeater {
@@ -147,14 +147,14 @@ Rectangle {
         // ── Volumen por aplicación ────────────────────────────────────
         MixerHeader {
             Layout.fillWidth: true
-            text: "Aplicaciones"
+            text: "Applications"
         }
 
         Text {
             Layout.fillWidth: true
 
             visible: mixer.streams.length === 0
-            text: "Nada reproduciéndose"
+            text: "Nothing playing"
             color: Qt.alpha(Colors.foreground, 0.45)
             font.family: "JetBrains Mono Nerd Font"
             font.pixelSize: 11
