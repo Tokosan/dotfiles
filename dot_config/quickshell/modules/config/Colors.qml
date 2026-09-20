@@ -28,9 +28,9 @@ Singleton {
     readonly property color color8: root.parsed.colors?.color8 ?? "#585b70"
 
     // Roles semánticos: los widgets usan estos, no los colorN.
-    // Sin blur del compositor detrás, la barra necesita más cuerpo para
-    // leerse sobre cualquier wallpaper.
-    readonly property color barBackground: Qt.alpha(root.background, 0.94)
+    // Opaca: sin blur del compositor detrás, cualquier transparencia deja
+    // asomar el wallpaper y ensucia la lectura.
+    readonly property color barBackground: root.background
     readonly property color workspaceIdle: Qt.alpha(root.foreground, 0.55)
     readonly property color workspaceActive: root.foreground
     readonly property color workspaceActiveBg: root.color4
@@ -47,7 +47,7 @@ Singleton {
 
     // Paneles flotantes: más opacos que la barra y con borde, porque se leen
     // sobre el wallpaper y no sobre el fondo de la barra.
-    readonly property color panelBackground: Qt.alpha(root.background, 0.97)
+    readonly property color panelBackground: root.background
     readonly property color panelBorder: Qt.alpha(root.foreground, 0.38)
     readonly property color panelShadow: "#000000"
 
