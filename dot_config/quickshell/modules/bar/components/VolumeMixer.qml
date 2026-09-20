@@ -62,41 +62,28 @@ Rectangle {
 
         spacing: 10
 
-        // ── Salida y entrada ──────────────────────────────────────────
-        MixerRow {
-            Layout.fillWidth: true
-            icon: "\u{f057e}"
-            label: "Salida"
-            node: mixer.sink
-        }
-
-        MixerRow {
-            Layout.fillWidth: true
-            icon: "\u{f036c}"
-            label: "Entrada"
-            node: mixer.source
-        }
-
         // ── Dispositivos de salida ────────────────────────────────────
         MixerHeader {
             Layout.fillWidth: true
             text: "Dispositivos"
-            visible: mixer.sinks.length > 1
         }
 
         Repeater {
-            model: mixer.sinks.length > 1 ? mixer.sinks : []
+            model: mixer.sinks
 
             delegate: MouseArea {
+                id: deviceRow
                 required property PwNode modelData
 
-                readonly property bool isActive: modelData?.id === mixer.sink?.id
+                readonly property bool isActive: deviceRow.modelData?.id === mixer.sink?.id
 
                 Layout.fillWidth: true
-                implicitHeight: 22
+                implicitHeight: 24
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: Pipewire.preferredDefaultAudioSink = modelData
+                // El cambio de salida por defecto es asíncrono: la lista se
+                // actualiza sola cuando pipewire confirma.
+                onClicked: Pipewire.preferredDefaultAudioSink = deviceRow.modelData
 
                 RowLayout {
                     anchors.fill: parent
@@ -104,20 +91,32 @@ Rectangle {
 
                     Text {
                         // Punto lleno si es el activo.
-                        text: parent.parent.isActive ? "\u{f0765}" : "\u{f0766}"
-                        color: parent.parent.isActive ? Colors.accent : Qt.alpha(Colors.foreground, 0.5)
+                        text: deviceRow.isActive ? "\u{f0765}" : "\u{f0766}"
+                        color: deviceRow.isActive ? Colors.accent : Qt.alpha(Colors.foreground, 0.45)
                         font.family: "JetBrains Mono Nerd Font"
                         font.pixelSize: 11
+
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: 120
+                            }
+                        }
                     }
 
                     Text {
                         Layout.fillWidth: true
 
-                        text: mixer.nodeLabel(parent.parent.modelData)
+                        text: mixer.nodeLabel(deviceRow.modelData)
                         elide: Text.ElideRight
-                        color: parent.parent.isActive ? Colors.foreground : Qt.alpha(Colors.foreground, 0.6)
+                        color: deviceRow.isActive ? Colors.foreground : deviceRow.containsMouse ? Colors.accent : Qt.alpha(Colors.foreground, 0.6)
                         font.family: "JetBrains Mono Nerd Font"
                         font.pixelSize: 11
+
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: 120
+                            }
+                        }
                     }
                 }
             }

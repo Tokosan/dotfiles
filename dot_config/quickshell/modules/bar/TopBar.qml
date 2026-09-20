@@ -41,6 +41,29 @@ PanelWindow {
         top: 0
     }
 
+    // El mezclador va aquí y no dentro de Volume: colgado del borde inferior
+    // de la pill quedaría fuera del área de su padre y QML no le entregaría
+    // los eventos de mouse, así que los sliders no responderían.
+    VolumeMixer {
+        id: volumeMixer
+        anchors.top: content.bottom
+        anchors.topMargin: 6
+        anchors.right: content.right
+        anchors.rightMargin: volumeWidget !== null ? content.width - volumeWidget.x - volumeWidget.width : 0
+
+        sink: volumeWidget.sink
+        source: volumeWidget.source
+
+        visible: opacity > 0
+        opacity: volumeWidget.expanded ? 1 : 0
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 160
+            }
+        }
+    }
+
     RowLayout {
         id: content
         // Anclado arriba y con la altura de la barra, no del panel: si siguiera
@@ -72,6 +95,7 @@ PanelWindow {
         }
 
         Volume {
+            id: volumeWidget
             Layout.alignment: Qt.AlignTop | Qt.AlignRight
         }
 
