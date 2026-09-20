@@ -25,6 +25,12 @@ Item {
             icon: "\u{f0ac}"
         },
         {
+            // Chromium a secas; las web apps (chrome-*) se resuelven por su
+            // propio sitio más abajo.
+            match: cls => cls === "chromium" || cls === "chromium-browser" || cls === "google-chrome",
+            icon: "\u{f0ac}"
+        },
+        {
             match: cls => cls.includes("whatsapp"),
             icon: "\u{f232}"
         },
