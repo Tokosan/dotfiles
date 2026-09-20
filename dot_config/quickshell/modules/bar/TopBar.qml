@@ -13,12 +13,16 @@ PanelWindow {
         left: true
         right: true
     }
-    // Crece si algún widget se expande (p. ej. el monitor de sistema), para
-    // que no quede cortado contra el borde del panel.
-    implicitHeight: Math.max(barHeight, content.implicitHeight)
+    // Altura fija que ya reserva el espacio de lo que puede desplegarse. No se
+    // ajusta al contenido: hacerlo reescalaba la superficie durante la
+    // animación y la fila entera daba un salto de un frame al cerrar.
+    // No afecta al layout de ventanas, porque la zona exclusiva es barHeight.
+    implicitHeight: barHeight + expandRoom
     color: "transparent"
 
     property real barHeight: 40
+    // Espacio para lo que se despliega bajo la barra.
+    property real expandRoom: 40
 
     // La zona exclusiva se queda en la altura de la barra: lo que se expande
     // flota sobre las ventanas en vez de reacomodarlas.
@@ -37,7 +41,13 @@ PanelWindow {
 
     RowLayout {
         id: content
-        anchors.fill: parent
+        // Anclado arriba y con la altura de la barra, no del panel: si siguiera
+        // al panel se redimensionaría durante la animación de expandir y toda
+        // la fila daría un salto.
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: topPanel.barHeight
         spacing: 4
 
         // Dos grupos, igual que en waybar: DP-1 lleva 1-5 y HDMI-A-1 lleva 6-10.
