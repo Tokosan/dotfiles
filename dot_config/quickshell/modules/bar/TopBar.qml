@@ -13,8 +13,21 @@ PanelWindow {
         left: true
         right: true
     }
-    implicitHeight: 40
+    // Crece si algún widget se expande (p. ej. el monitor de sistema), para
+    // que no quede cortado contra el borde del panel.
+    implicitHeight: Math.max(barHeight, content.implicitHeight)
     color: "transparent"
+
+    property real barHeight: 40
+
+    // La zona exclusiva se queda en la altura de la barra: lo que se expande
+    // flota sobre las ventanas en vez de reacomodarlas.
+    exclusiveZone: barHeight
+
+    // Solo la barra recibe clicks; el resto del panel deja pasar el mouse.
+    mask: Region {
+        item: content
+    }
 
     margins {
         left: 50
@@ -23,6 +36,7 @@ PanelWindow {
     }
 
     RowLayout {
+        id: content
         anchors.fill: parent
         spacing: 4
 

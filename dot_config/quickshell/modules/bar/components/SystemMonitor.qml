@@ -14,6 +14,8 @@ Rectangle {
 
     // Alterna entre relleno de carga y porcentaje, para las tres a la vez.
     property bool showPercent: false
+    // Expande la pill hacia abajo mostrando el porcentaje bajo cada una.
+    property bool expanded: false
 
     property int cpuUsage: 0
     property int memUsage: 0
@@ -24,7 +26,17 @@ Rectangle {
     property var lastCpu: null
 
     implicitWidth: row.implicitWidth + hPadding * 2
-    implicitHeight: barHeight
+    implicitHeight: barHeight + (expanded ? expandExtra : 0)
+
+    // Cuánto crece la pill al expandirse.
+    readonly property real expandExtra: 16
+
+    Behavior on implicitHeight {
+        NumberAnimation {
+            duration: 200
+            easing.type: Easing.OutCubic
+        }
+    }
 
     color: Colors.barBackground
     bottomLeftRadius: bottomRadius
@@ -84,7 +96,8 @@ Rectangle {
 
     Timer {
         running: true
-        interval: 5000
+        // Expandido se refresca más seguido, porque se está mirando el detalle.
+        interval: monitor.expanded ? 1000 : 5000
         repeat: true
         triggeredOnStart: true
 
@@ -99,31 +112,42 @@ Rectangle {
 
     MouseArea {
         anchors.fill: parent
-        acceptedButtons: Qt.MiddleButton
-        onClicked: monitor.showPercent = !monitor.showPercent
+        acceptedButtons: Qt.LeftButton | Qt.MiddleButton
+        cursorShape: Qt.PointingHandCursor
+        onClicked: mouse => {
+            if (mouse.button === Qt.MiddleButton)
+                monitor.showPercent = !monitor.showPercent;
+            else
+                monitor.expanded = !monitor.expanded;
+        }
     }
 
     RowLayout {
         id: row
-        anchors.centerIn: parent
+        anchors.top: parent.top
+        anchors.topMargin: (monitor.barHeight - 26) / 2
+        anchors.horizontalCenter: parent.horizontalCenter
         spacing: 6
 
         Stat {
             label: "CPU"
             value: monitor.cpuUsage
             showPercent: monitor.showPercent
+            expanded: monitor.expanded
         }
 
         Stat {
             label: "RAM"
             value: monitor.memUsage
             showPercent: monitor.showPercent
+            expanded: monitor.expanded
         }
 
         Stat {
             label: "GPU"
             value: monitor.gpuUsage
             showPercent: monitor.showPercent
+            expanded: monitor.expanded
         }
     }
 }
