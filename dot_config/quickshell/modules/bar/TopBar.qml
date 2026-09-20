@@ -40,12 +40,41 @@ PanelWindow {
             item: volumeMixer
             intersection: Intersection.Combine
         }
+
+        Region {
+            item: globalMenu
+            intersection: Intersection.Combine
+        }
     }
 
     margins {
         left: 10
         right: 10
         top: 0
+    }
+
+    // Mismo patrón que el mezclador: fuera del RowLayout para quedar dentro
+    // del área del panel y poder recibir los clicks.
+    GlobalMenu {
+        id: globalMenu
+
+        property bool open: false
+
+        anchors.top: content.bottom
+        anchors.topMargin: 6
+        anchors.left: content.left
+        anchors.leftMargin: starButton.x
+
+        visible: opacity > 0
+        opacity: open ? 1 : 0
+        height: open ? implicitHeight : 0
+        clip: true
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 160
+            }
+        }
     }
 
     // El mezclador va aquí y no dentro de Volume: colgado del borde inferior
@@ -88,7 +117,17 @@ PanelWindow {
         spacing: 4
 
         StarButton {
+            id: starButton
             Layout.alignment: Qt.AlignTop | Qt.AlignLeft
+
+            onSecondaryAction: {
+                if (globalMenu.open)
+                    globalMenu.open = false;
+                else {
+                    globalMenu.reset();
+                    globalMenu.open = true;
+                }
+            }
         }
 
         // Dos grupos, igual que en waybar: DP-1 lleva 1-5 y HDMI-A-1 lleva 6-10.
