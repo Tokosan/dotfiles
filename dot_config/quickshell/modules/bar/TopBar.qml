@@ -18,7 +18,7 @@ PanelWindow {
 
     margins {
         left: 50
-        right: 0
+        right: 10
         top: 0
     }
 
@@ -39,6 +39,10 @@ PanelWindow {
 
         Item {
             Layout.fillWidth: true
+        }
+
+        Clock {
+            Layout.alignment: Qt.AlignTop | Qt.AlignRight
         }
     }
 }
