@@ -16,12 +16,13 @@ Item {
     // pegados en crudo se pierden con facilidad al editar el archivo.
     readonly property var iconMap: [
         {
+            // Globo genérico de internet en vez del logo del navegador.
             match: cls => cls === "firefox",
-            icon: "\u{f269}"
+            icon: "\u{f0ac}"
         },
         {
             match: cls => cls === "zen" || cls.startsWith("zen-"),
-            icon: "\u{f269}"
+            icon: "\u{f0ac}"
         },
         {
             match: cls => cls.includes("whatsapp"),
