@@ -42,16 +42,21 @@ hl.config({
     misc = {
         disable_hyprland_logo = true,
     },
-    -- animations = {
-    --     enabled = true,
-    --     bezier = myBezier, 0.05, 0.9, 0.1, 1.05,
-    --     animation = windows, 1, 2, myBezier,
-    --     animation = windowsOut, 1, 3, default, popin 80%,
-    --     animation = border, 1, 2, default,
-    --     animation = borderangle, 1,2, default,
-    --     animation = fade, 1, 2, default,
-    --     animation = workspaces, 1, 2, default,
-    -- }
+    animations = {
+        enabled = true,
+    },
 })
+
+-- Curves are declared outside of hl.config(). The four numbers of a .conf
+-- `bezier = name, x1, y1, x2, y2` become the two control points below.
+hl.curve("myBezier", { type = "bezier", points = { { 0.05, 0.9 }, { 0.1, 1.05 } } })
+
+-- `animation = leaf, enabled, speed, curve[, style]`
+hl.animation({ leaf = "windows", enabled = true, speed = 2, bezier = "myBezier" })
+hl.animation({ leaf = "windowsOut", enabled = true, speed = 3, bezier = "default", style = "popin 80%" })
+hl.animation({ leaf = "border", enabled = true, speed = 2, bezier = "default" })
+hl.animation({ leaf = "borderangle", enabled = true, speed = 2, bezier = "default" })
+hl.animation({ leaf = "fade", enabled = true, speed = 2, bezier = "default" })
+hl.animation({ leaf = "workspaces", enabled = true, speed = 2, bezier = "default" })
 
 -- # https://wiki.hypr.land/Configuring/Variables/#animations
