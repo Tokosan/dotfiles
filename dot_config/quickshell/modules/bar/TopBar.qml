@@ -87,6 +87,10 @@ PanelWindow {
         height: topPanel.barHeight
         spacing: 4
 
+        StarButton {
+            Layout.alignment: Qt.AlignTop | Qt.AlignLeft
+        }
+
         // Dos grupos, igual que en waybar: DP-1 lleva 1-5 y HDMI-A-1 lleva 6-10.
         Workspaces {
             Layout.alignment: Qt.AlignTop | Qt.AlignLeft
