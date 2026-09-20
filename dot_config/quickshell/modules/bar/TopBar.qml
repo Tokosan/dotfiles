@@ -41,6 +41,10 @@ PanelWindow {
             Layout.fillWidth: true
         }
 
+        SystemMonitor {
+            Layout.alignment: Qt.AlignTop | Qt.AlignRight
+        }
+
         Volume {
             Layout.alignment: Qt.AlignTop | Qt.AlignRight
         }

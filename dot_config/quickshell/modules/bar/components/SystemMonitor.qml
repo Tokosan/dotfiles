@@ -1,0 +1,117 @@
+import Quickshell
+import Quickshell.Io
+import QtQuick
+import QtQuick.Layouts
+
+import "../../config"
+
+Rectangle {
+    id: monitor
+
+    property real hPadding: 10
+    property real bottomRadius: 15
+    property real barHeight: 34
+
+    property int cpuUsage: 0
+    property int memUsage: 0
+    property int gpuUsage: 0
+
+    // /proc/stat trae contadores acumulados: el uso real es la diferencia
+    // entre dos lecturas.
+    property var lastCpu: null
+
+    implicitWidth: row.implicitWidth + hPadding * 2
+    implicitHeight: barHeight
+
+    color: Colors.barBackground
+    bottomLeftRadius: bottomRadius
+    bottomRightRadius: bottomRadius
+
+    function readCpu(text) {
+        const line = text.split("\n")[0];
+        const parts = line.trim().split(/\s+/).slice(1).map(Number);
+        if (parts.length < 4)
+            return;
+
+        const idle = parts[3] + (parts[4] ?? 0);
+        const total = parts.reduce((a, b) => a + b, 0);
+
+        if (monitor.lastCpu) {
+            const dTotal = total - monitor.lastCpu.total;
+            const dIdle = idle - monitor.lastCpu.idle;
+            if (dTotal > 0)
+                monitor.cpuUsage = Math.round((1 - dIdle / dTotal) * 100);
+        }
+
+        monitor.lastCpu = {
+            idle: idle,
+            total: total
+        };
+    }
+
+    function readMem(text) {
+        const total = Number(text.match(/MemTotal:\s+(\d+)/)?.[1] ?? 0);
+        const available = Number(text.match(/MemAvailable:\s+(\d+)/)?.[1] ?? 0);
+        if (total > 0)
+            monitor.memUsage = Math.round((1 - available / total) * 100);
+    }
+
+    FileView {
+        id: statFile
+        path: "/proc/stat"
+    }
+
+    FileView {
+        id: memFile
+        path: "/proc/meminfo"
+    }
+
+    Process {
+        id: gpuProcess
+        command: ["nvidia-smi", "--query-gpu=utilization.gpu", "--format=csv,noheader,nounits"]
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const value = parseInt(text.trim());
+                if (!isNaN(value))
+                    monitor.gpuUsage = value;
+            }
+        }
+    }
+
+    Timer {
+        running: true
+        interval: 1000
+        repeat: true
+        triggeredOnStart: true
+
+        onTriggered: {
+            statFile.reload();
+            memFile.reload();
+            monitor.readCpu(statFile.text());
+            monitor.readMem(memFile.text());
+            gpuProcess.running = true;
+        }
+    }
+
+    RowLayout {
+        id: row
+        anchors.centerIn: parent
+        spacing: 6
+
+        Stat {
+            label: "CPU"
+            value: monitor.cpuUsage
+        }
+
+        Stat {
+            label: "RAM"
+            value: monitor.memUsage
+        }
+
+        Stat {
+            label: "GPU"
+            value: monitor.gpuUsage
+        }
+    }
+}
