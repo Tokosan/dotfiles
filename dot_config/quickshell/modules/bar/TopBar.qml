@@ -70,6 +70,8 @@ PanelWindow {
 
         property bool open: false
 
+        onClosed: globalMenu.open = false
+
         anchors.top: content.bottom
         anchors.topMargin: 6
         anchors.left: content.left

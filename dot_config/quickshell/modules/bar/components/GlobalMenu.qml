@@ -15,8 +15,8 @@ Rectangle {
     property real padding: 10
     property real radiusValue: 15
 
-    implicitWidth: view === "wallpaper" ? 420 : 210
-    implicitHeight: (view === "wallpaper" ? wallpaperView.implicitHeight : menuView.implicitHeight) + padding * 2
+    implicitWidth: view === "wallpaper" ? 420 : view === "apps" ? 360 : 230
+    implicitHeight: (view === "wallpaper" ? wallpaperView.implicitHeight : view === "apps" ? appsView.implicitHeight : menuView.implicitHeight) + padding * 2
 
     color: Colors.panelBackground
     radius: radiusValue
@@ -29,6 +29,8 @@ Rectangle {
             easing.type: Easing.OutCubic
         }
     }
+
+    signal closed
 
     function reset() {
         menu.view = "menu";
@@ -47,38 +49,58 @@ Rectangle {
 
         MenuEntry {
             Layout.fillWidth: true
+            icon: "\u{f009}"
+            label: "Apps"
+            onTriggered: menu.view = "apps"
+        }
+
+        MenuEntry {
+            Layout.fillWidth: true
             icon: "\u{f03e}"
-            label: "Wallpaper"
+            label: "Style"
             onTriggered: menu.view = "wallpaper"
         }
 
         MenuEntry {
             Layout.fillWidth: true
             icon: "\u{f030}"
-            label: "Screenshot"
+            label: "Capture"
             enabled: false
         }
 
         MenuEntry {
             Layout.fillWidth: true
-            icon: "\u{f002}"
-            label: "Launcher"
+            icon: "\u{f013}"
+            label: "Setup"
             enabled: false
         }
 
         MenuEntry {
             Layout.fillWidth: true
-            icon: "\u{f021}"
-            label: "Restart Hyprland"
+            icon: "\u{f019}"
+            label: "Install"
             enabled: false
         }
 
         MenuEntry {
             Layout.fillWidth: true
             icon: "\u{f011}"
-            label: "Power off"
+            label: "System"
             enabled: false
         }
+    }
+
+    // ── Vista: lanzador de aplicaciones ───────────────────────────────
+    AppLauncher {
+        id: appsView
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.margins: menu.padding
+
+        visible: menu.view === "apps"
+        onBack: menu.view = "menu"
+        onLaunched: menu.closed()
     }
 
     // ── Vista: grilla de wallpapers ───────────────────────────────────
