@@ -34,6 +34,14 @@ Rectangle {
         return Math.round((node?.audio?.volume ?? 0) * 100);
     }
 
+    function toggleMute(node) {
+        const audio = node?.audio;
+        if (!audio)
+            return;
+
+        audio.muted = !audio.muted;
+    }
+
     function scrollVolume(node, delta) {
         const audio = node?.audio;
         if (!audio)
@@ -52,6 +60,8 @@ Rectangle {
         MouseArea {
             implicitWidth: micText.implicitWidth
             implicitHeight: micText.implicitHeight
+            cursorShape: Qt.PointingHandCursor
+            onClicked: volume.toggleMute(volume.source)
             onWheel: wheel => volume.scrollVolume(volume.source, wheel.angleDelta.y)
 
             Text {
@@ -70,6 +80,8 @@ Rectangle {
         MouseArea {
             implicitWidth: sinkText.implicitWidth
             implicitHeight: sinkText.implicitHeight
+            cursorShape: Qt.PointingHandCursor
+            onClicked: volume.toggleMute(volume.sink)
             onWheel: wheel => volume.scrollVolume(volume.sink, wheel.angleDelta.y)
 
             Text {
