@@ -41,6 +41,10 @@ PanelWindow {
             Layout.fillWidth: true
         }
 
+        Volume {
+            Layout.alignment: Qt.AlignTop | Qt.AlignRight
+        }
+
         Clock {
             Layout.alignment: Qt.AlignTop | Qt.AlignRight
         }
