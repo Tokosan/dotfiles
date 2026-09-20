@@ -54,6 +54,14 @@ Rectangle {
         audio.volume = Math.max(0, Math.min(1, audio.volume + dir * volume.step));
     }
 
+    // Color del texto según estado: muteado manda sobre el hover.
+    function textColor(node, hovered) {
+        if (node?.audio?.muted)
+            return Colors.alert;
+
+        return hovered ? Colors.accent : Colors.foreground;
+    }
+
     // Ancho reservado para un porcentaje. Se fija con el caso más largo para
     // que ni la pill ni los iconos se muevan al cambiar de 2 a 3 cifras.
     TextMetrics {
@@ -106,96 +114,114 @@ Rectangle {
         anchors.centerIn: parent
         spacing: 12
 
-        // Entrada (micrófono): número a la derecha, icono después.
-        RowLayout {
-            spacing: 5
+        // Entrada (micrófono). Un solo MouseArea cubre número, icono y el
+        // espacio entre ambos, que antes quedaba muerto al click.
+        MouseArea {
+            id: micArea
 
-            MouseArea {
-                implicitWidth: pctMetrics.width
-                implicitHeight: micPct.implicitHeight
-                cursorShape: Qt.PointingHandCursor
-                onClicked: volume.toggleMute(volume.source)
-                onWheel: wheel => volume.scrollVolume(volume.source, wheel.angleDelta.y)
+            readonly property real gap: 5
 
-                Text {
-                    id: micPct
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
+            implicitWidth: pctMetrics.width + gap + Math.max(micIconMetrics.width, micIconMutedMetrics.width)
+            implicitHeight: micPct.implicitHeight
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: volume.toggleMute(volume.source)
+            onWheel: wheel => volume.scrollVolume(volume.source, wheel.angleDelta.y)
 
-                    text: volume.label(volume.source)
-                    color: volume.source?.audio?.muted ? Colors.alert : Colors.foreground
-                    font.family: "JetBrains Mono Nerd Font"
-                    font.pixelSize: 13
-                    font.bold: true
+            Text {
+                id: micPct
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+
+                width: pctMetrics.width
+                horizontalAlignment: Text.AlignRight
+
+                text: volume.label(volume.source)
+                color: volume.textColor(volume.source, micArea.containsMouse)
+                font.family: "JetBrains Mono Nerd Font"
+                font.pixelSize: 13
+                font.bold: true
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: 120
+                    }
                 }
             }
 
-            MouseArea {
-                implicitWidth: Math.max(micIconMetrics.width, micIconMutedMetrics.width)
-                implicitHeight: micIcon.implicitHeight
-                cursorShape: Qt.PointingHandCursor
-                onClicked: volume.toggleMute(volume.source)
-                onWheel: wheel => volume.scrollVolume(volume.source, wheel.angleDelta.y)
+            Text {
+                id: micIcon
+                anchors.left: micPct.right
+                anchors.leftMargin: micArea.gap
+                anchors.verticalCenter: parent.verticalCenter
 
-                Text {
-                    id: micIcon
-                    // Anclado a la izquierda y no centrado: el glifo tachado es
-                    // más angosto y centrarlo lo correría un píxel.
-                    anchors.left: parent.left
-                    anchors.verticalCenter: parent.verticalCenter
+                text: volume.source?.audio?.muted ? "\u{f036d}" : "\u{f036c}"
+                color: volume.textColor(volume.source, micArea.containsMouse)
+                font.family: "JetBrains Mono Nerd Font"
+                font.pixelSize: 13
+                font.bold: true
 
-                    text: volume.source?.audio?.muted ? "\u{f036d}" : "\u{f036c}"
-                    color: volume.source?.audio?.muted ? Colors.alert : Colors.foreground
-                    font.family: "JetBrains Mono Nerd Font"
-                    font.pixelSize: 13
-                    font.bold: true
+                Behavior on color {
+                    ColorAnimation {
+                        duration: 120
+                    }
                 }
             }
         }
 
-        // Salida (altavoces): icono primero, número a la izquierda.
-        RowLayout {
-            spacing: 5
+        // Salida (altavoces): icono primero, número después.
+        MouseArea {
+            id: sinkArea
 
-            MouseArea {
-                implicitWidth: Math.max(sinkIconMetrics.width, sinkIconLowMetrics.width, sinkIconMedMetrics.width, sinkIconOffMetrics.width)
-                implicitHeight: sinkIcon.implicitHeight
-                cursorShape: Qt.PointingHandCursor
-                onClicked: volume.toggleMute(volume.sink)
-                onWheel: wheel => volume.scrollVolume(volume.sink, wheel.angleDelta.y)
+            readonly property real gap: 5
+            readonly property real iconWidth: Math.max(sinkIconMetrics.width, sinkIconLowMetrics.width, sinkIconMedMetrics.width, sinkIconOffMetrics.width)
 
-                Text {
-                    id: sinkIcon
-                    anchors.left: parent.left
-                    anchors.verticalCenter: parent.verticalCenter
+            implicitWidth: iconWidth + gap + pctMetrics.width
+            implicitHeight: sinkPct.implicitHeight
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: volume.toggleMute(volume.sink)
+            onWheel: wheel => volume.scrollVolume(volume.sink, wheel.angleDelta.y)
 
-                    readonly property int pct: volume.percent(volume.sink)
-                    // El icono sigue el nivel, como los format-icons de waybar.
-                    text: volume.sink?.audio?.muted || pct === 0 ? "\u{f075f}" : pct < 34 ? "\u{f057f}" : pct < 67 ? "\u{f0580}" : "\u{f057e}"
-                    color: volume.sink?.audio?.muted ? Colors.alert : Colors.foreground
-                    font.family: "JetBrains Mono Nerd Font"
-                    font.pixelSize: 13
-                    font.bold: true
+            Text {
+                id: sinkIcon
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+
+                readonly property int pct: volume.percent(volume.sink)
+                // El icono sigue el nivel, como los format-icons de waybar.
+                text: volume.sink?.audio?.muted || pct === 0 ? "\u{f075f}" : pct < 34 ? "\u{f057f}" : pct < 67 ? "\u{f0580}" : "\u{f057e}"
+                color: volume.textColor(volume.sink, sinkArea.containsMouse)
+                font.family: "JetBrains Mono Nerd Font"
+                font.pixelSize: 13
+                font.bold: true
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: 120
+                    }
                 }
             }
 
-            MouseArea {
-                implicitWidth: pctMetrics.width
-                implicitHeight: sinkPct.implicitHeight
-                cursorShape: Qt.PointingHandCursor
-                onClicked: volume.toggleMute(volume.sink)
-                onWheel: wheel => volume.scrollVolume(volume.sink, wheel.angleDelta.y)
+            Text {
+                id: sinkPct
+                anchors.left: parent.left
+                anchors.leftMargin: sinkArea.iconWidth + sinkArea.gap
+                anchors.verticalCenter: parent.verticalCenter
 
-                Text {
-                    id: sinkPct
-                    anchors.left: parent.left
-                    anchors.verticalCenter: parent.verticalCenter
+                width: pctMetrics.width
+                horizontalAlignment: Text.AlignLeft
 
-                    text: volume.label(volume.sink)
-                    color: volume.sink?.audio?.muted ? Colors.alert : Colors.foreground
-                    font.family: "JetBrains Mono Nerd Font"
-                    font.pixelSize: 13
-                    font.bold: true
+                text: volume.label(volume.sink)
+                color: volume.textColor(volume.sink, sinkArea.containsMouse)
+                font.family: "JetBrains Mono Nerd Font"
+                font.pixelSize: 13
+                font.bold: true
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: 120
+                    }
                 }
             }
         }

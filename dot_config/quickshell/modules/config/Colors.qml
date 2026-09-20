@@ -39,6 +39,10 @@ Singleton {
     // señal.
     readonly property color alert: "#f38ba8"
 
+    // Realce de hover. Fijo por el mismo motivo que alert: la paleta del
+    // wallpaper no garantiza un verde reconocible.
+    readonly property color accent: "#a6e3a1"
+
     // Relleno de carga de las pills de sistema, con los mismos tramos que
     // waybar. Son fijos y no de pywal: el código de color verde/amarillo/rojo
     // tiene que leerse igual con cualquier wallpaper.
