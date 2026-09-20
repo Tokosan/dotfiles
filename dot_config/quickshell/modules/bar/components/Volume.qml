@@ -11,6 +11,8 @@ Rectangle {
     property real hPadding: 12
     property real bottomRadius: 15
     property real barHeight: 34
+    // Cuánto cambia el volumen por cada paso de rueda.
+    property real step: 0.05
 
     readonly property PwNode sink: Pipewire.defaultAudioSink
     readonly property PwNode source: Pipewire.defaultAudioSource
@@ -27,11 +29,12 @@ Rectangle {
         objects: [volume.sink, volume.source]
     }
 
-    // Cuánto cambia el volumen por cada paso de rueda.
-    property real step: 0.05
-
     function percent(node) {
         return Math.round((node?.audio?.volume ?? 0) * 100);
+    }
+
+    function label(node) {
+        return node?.audio?.muted ? "---" : volume.percent(node) + "%";
     }
 
     function toggleMute(node) {
@@ -51,82 +54,149 @@ Rectangle {
         audio.volume = Math.max(0, Math.min(1, audio.volume + dir * volume.step));
     }
 
+    // Ancho reservado para un porcentaje. Se fija con el caso más largo para
+    // que ni la pill ni los iconos se muevan al cambiar de 2 a 3 cifras.
+    TextMetrics {
+        id: pctMetrics
+        font: micPct.font
+        text: "100%"
+    }
+
+    // El glifo de micrófono tachado no mide igual que el normal; se reserva el
+    // mayor para que el icono no se corra al mutear.
+    TextMetrics {
+        id: micIconMetrics
+        font: micIcon.font
+        text: "\u{f036c}"
+    }
+
+    TextMetrics {
+        id: micIconMutedMetrics
+        font: micIcon.font
+        text: "\u{f036d}"
+    }
+
+    // Los cuatro glifos de salida tampoco miden igual entre sí.
+    TextMetrics {
+        id: sinkIconMetrics
+        font: sinkIcon.font
+        text: "\u{f057e}"
+    }
+
+    TextMetrics {
+        id: sinkIconLowMetrics
+        font: sinkIcon.font
+        text: "\u{f057f}"
+    }
+
+    TextMetrics {
+        id: sinkIconMedMetrics
+        font: sinkIcon.font
+        text: "\u{f0580}"
+    }
+
+    TextMetrics {
+        id: sinkIconOffMetrics
+        font: sinkIcon.font
+        text: "\u{f075f}"
+    }
+
     RowLayout {
         id: row
         anchors.centerIn: parent
-        spacing: 10
+        spacing: 12
 
-        // Entrada (micrófono)
-        MouseArea {
-            // Ancho fijo con el máximo de ambos estados: el texto de mute es
-            // un par de píxeles más ancho y si no la pill saltaría al mutear.
-            implicitWidth: Math.max(micText.implicitWidth, micMetrics.implicitWidth, micMetricsMuted.implicitWidth)
-            implicitHeight: micText.implicitHeight
-            cursorShape: Qt.PointingHandCursor
-            onClicked: volume.toggleMute(volume.source)
-            onWheel: wheel => volume.scrollVolume(volume.source, wheel.angleDelta.y)
+        // Entrada (micrófono): número a la derecha, icono después.
+        RowLayout {
+            spacing: 5
 
-            // Solo para medir: nunca se dibuja. Hay dos porque el glifo de
-            // mute y el del micrófono activo no miden lo mismo, y el caso más
-            // ancho es el volumen de tres cifras.
-            Text {
-                id: micMetrics
-                visible: false
+            MouseArea {
+                implicitWidth: pctMetrics.width
+                implicitHeight: micPct.implicitHeight
+                cursorShape: Qt.PointingHandCursor
+                onClicked: volume.toggleMute(volume.source)
+                onWheel: wheel => volume.scrollVolume(volume.source, wheel.angleDelta.y)
 
-                text: "100% \u{f036c}"
-                font: micText.font
+                Text {
+                    id: micPct
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    text: volume.label(volume.source)
+                    color: volume.source?.audio?.muted ? Colors.alert : Colors.foreground
+                    font.family: "JetBrains Mono Nerd Font"
+                    font.pixelSize: 13
+                    font.bold: true
+                }
             }
 
-            Text {
-                id: micMetricsMuted
-                visible: false
+            MouseArea {
+                implicitWidth: Math.max(micIconMetrics.width, micIconMutedMetrics.width)
+                implicitHeight: micIcon.implicitHeight
+                cursorShape: Qt.PointingHandCursor
+                onClicked: volume.toggleMute(volume.source)
+                onWheel: wheel => volume.scrollVolume(volume.source, wheel.angleDelta.y)
 
-                text: "--- \u{f036d}"
-                font: micText.font
-            }
+                Text {
+                    id: micIcon
+                    // Anclado a la izquierda y no centrado: el glifo tachado es
+                    // más angosto y centrarlo lo correría un píxel.
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
 
-            Text {
-                id: micText
-                anchors.centerIn: parent
-
-                text: volume.source?.audio?.muted ? "--- \u{f036d}" : volume.percent(volume.source) + "% \u{f036c}"
-                color: volume.source?.audio?.muted ? Colors.alert : Colors.foreground
-                font.family: "JetBrains Mono Nerd Font"
-                font.pixelSize: 13
-                font.bold: true
+                    text: volume.source?.audio?.muted ? "\u{f036d}" : "\u{f036c}"
+                    color: volume.source?.audio?.muted ? Colors.alert : Colors.foreground
+                    font.family: "JetBrains Mono Nerd Font"
+                    font.pixelSize: 13
+                    font.bold: true
+                }
             }
         }
 
-        // Salida (altavoces)
-        MouseArea {
-            implicitWidth: Math.max(sinkText.implicitWidth, sinkMetrics.implicitWidth)
-            implicitHeight: sinkText.implicitHeight
-            cursorShape: Qt.PointingHandCursor
-            onClicked: volume.toggleMute(volume.sink)
-            onWheel: wheel => volume.scrollVolume(volume.sink, wheel.angleDelta.y)
+        // Salida (altavoces): icono primero, número a la izquierda.
+        RowLayout {
+            spacing: 5
 
-            // Solo para medir: el caso más ancho es el volumen de tres cifras.
-            Text {
-                id: sinkMetrics
-                visible: false
+            MouseArea {
+                implicitWidth: Math.max(sinkIconMetrics.width, sinkIconLowMetrics.width, sinkIconMedMetrics.width, sinkIconOffMetrics.width)
+                implicitHeight: sinkIcon.implicitHeight
+                cursorShape: Qt.PointingHandCursor
+                onClicked: volume.toggleMute(volume.sink)
+                onWheel: wheel => volume.scrollVolume(volume.sink, wheel.angleDelta.y)
 
-                text: "\u{f057e} 100%"
-                font: sinkText.font
+                Text {
+                    id: sinkIcon
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    readonly property int pct: volume.percent(volume.sink)
+                    // El icono sigue el nivel, como los format-icons de waybar.
+                    text: volume.sink?.audio?.muted || pct === 0 ? "\u{f075f}" : pct < 34 ? "\u{f057f}" : pct < 67 ? "\u{f0580}" : "\u{f057e}"
+                    color: volume.sink?.audio?.muted ? Colors.alert : Colors.foreground
+                    font.family: "JetBrains Mono Nerd Font"
+                    font.pixelSize: 13
+                    font.bold: true
+                }
             }
 
-            Text {
-                id: sinkText
-                anchors.centerIn: parent
+            MouseArea {
+                implicitWidth: pctMetrics.width
+                implicitHeight: sinkPct.implicitHeight
+                cursorShape: Qt.PointingHandCursor
+                onClicked: volume.toggleMute(volume.sink)
+                onWheel: wheel => volume.scrollVolume(volume.sink, wheel.angleDelta.y)
 
-                readonly property int pct: volume.percent(volume.sink)
-                // El icono sigue el nivel, como los format-icons de waybar.
-                readonly property string icon: volume.sink?.audio?.muted ? "\u{f075f}" : pct === 0 ? "\u{f075f}" : pct < 34 ? "\u{f057f}" : pct < 67 ? "\u{f0580}" : "\u{f057e}"
+                Text {
+                    id: sinkPct
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
 
-                text: volume.sink?.audio?.muted ? icon + " ---" : icon + " " + pct + "%"
-                color: volume.sink?.audio?.muted ? Colors.alert : Colors.foreground
-                font.family: "JetBrains Mono Nerd Font"
-                font.pixelSize: 13
-                font.bold: true
+                    text: volume.label(volume.sink)
+                    color: volume.sink?.audio?.muted ? Colors.alert : Colors.foreground
+                    font.family: "JetBrains Mono Nerd Font"
+                    font.pixelSize: 13
+                    font.bold: true
+                }
             }
         }
     }
