@@ -74,9 +74,17 @@ Rectangle {
                 implicitHeight: pill.implicitHeight
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
+                acceptedButtons: Qt.LeftButton | Qt.MiddleButton
                 // Siempre por dispatch: activate() actuaría sobre un objeto que
                 // puede traer id = -1 y enfocar el workspace equivocado.
-                onClicked: Hyprland.dispatch('hl.dsp.focus({ workspace = ' + entry.modelData.id + ' })')
+                onClicked: mouse => {
+                    if (mouse.button === Qt.MiddleButton)
+                        // Igual que super+shift+n: lleva la ventana enfocada y
+                        // el foco con ella.
+                        Hyprland.dispatch('hl.dsp.window.move({ workspace = ' + entry.modelData.id + ' })');
+                    else
+                        Hyprland.dispatch('hl.dsp.focus({ workspace = ' + entry.modelData.id + ' })');
+                }
 
                 Rectangle {
                     id: pill
