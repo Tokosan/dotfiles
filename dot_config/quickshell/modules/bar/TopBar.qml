@@ -43,7 +43,7 @@ PanelWindow {
     }
 
     margins {
-        left: 50
+        left: 0
         right: 10
         top: 0
     }
