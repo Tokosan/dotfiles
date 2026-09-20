@@ -55,6 +55,14 @@ PanelWindow {
         top: 0
     }
 
+    // Cubre el panel entero para que las estrellitas puedan caer bajo la
+    // barra sin recortarse contra el borde del botón.
+    StarBurst {
+        id: starBurst
+        anchors.fill: parent
+        z: 10
+    }
+
     // Mismo patrón que el mezclador: fuera del RowLayout para quedar dentro
     // del área del panel y poder recibir los clicks.
     GlobalMenu {
@@ -122,6 +130,12 @@ PanelWindow {
             id: starButton
             Layout.alignment: Qt.AlignTop | Qt.AlignLeft
             Layout.rightMargin: 6
+
+            onSparkle: {
+                // Las estrellitas salen desde el centro-bajo del botón.
+                starBurst.moveTo(starButton.x + starButton.width / 2, topPanel.barHeight - 6);
+                starBurst.fire(16);
+            }
 
             onSecondaryAction: {
                 if (globalMenu.open)

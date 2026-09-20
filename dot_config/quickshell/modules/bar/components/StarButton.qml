@@ -1,4 +1,7 @@
+import Quickshell
 import QtQuick
+import QtQuick.Particles
+import QtMultimedia
 
 import "../../config"
 
@@ -23,6 +26,22 @@ Rectangle {
     bottomLeftRadius: 0
     bottomRightRadius: bottomRadius
 
+    // La ráfaga la dispara quien nos contiene: las partículas tienen que
+    // poder salir del botón sin recortarse.
+    signal sparkle
+
+    function celebrate() {
+        chime.play();
+        starButton.sparkle();
+        pulse.restart();
+    }
+
+    SoundEffect {
+        id: chime
+        source: Qt.resolvedUrl("../../../assets/chime.wav")
+        volume: 0.35
+    }
+
     MouseArea {
         id: area
         anchors.fill: parent
@@ -32,6 +51,8 @@ Rectangle {
         acceptedButtons: Qt.LeftButton | Qt.RightButton
 
         onClicked: mouse => {
+            starButton.celebrate();
+
             if (mouse.button === Qt.RightButton)
                 starButton.secondaryAction();
             else
@@ -39,6 +60,7 @@ Rectangle {
         }
 
         Text {
+            id: starGlyph
             anchors.centerIn: parent
 
             // nf-fa-star
@@ -50,6 +72,27 @@ Rectangle {
             Behavior on color {
                 ColorAnimation {
                     duration: 120
+                }
+            }
+
+            // Rebote al hacer click.
+            SequentialAnimation {
+                id: pulse
+
+                NumberAnimation {
+                    target: starGlyph
+                    property: "scale"
+                    to: 1.35
+                    duration: 90
+                    easing.type: Easing.OutQuad
+                }
+
+                NumberAnimation {
+                    target: starGlyph
+                    property: "scale"
+                    to: 1
+                    duration: 260
+                    easing.type: Easing.OutBack
                 }
             }
         }
