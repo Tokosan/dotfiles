@@ -31,8 +31,15 @@ PanelWindow {
     exclusiveZone: barHeight
 
     // Solo la barra recibe clicks; el resto del panel deja pasar el mouse.
+    // Solo la barra y lo que esté desplegado reciben clicks; el resto del
+    // panel los deja pasar a las ventanas de abajo.
     mask: Region {
         item: content
+
+        Region {
+            item: volumeMixer
+            intersection: Intersection.Combine
+        }
     }
 
     margins {
@@ -56,6 +63,11 @@ PanelWindow {
 
         visible: opacity > 0
         opacity: volumeWidget.expanded ? 1 : 0
+
+        // Cerrado no ocupa nada: si conservara su tamaño, la máscara seguiría
+        // capturando clicks en esa zona aunque el panel esté invisible.
+        height: volumeWidget.expanded ? implicitHeight : 0
+        clip: true
 
         Behavior on opacity {
             NumberAnimation {
