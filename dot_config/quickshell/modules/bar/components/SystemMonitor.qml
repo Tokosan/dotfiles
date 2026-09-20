@@ -112,8 +112,9 @@ Rectangle {
 
     MouseArea {
         anchors.fill: parent
-        acceptedButtons: Qt.LeftButton | Qt.MiddleButton
+        acceptedButtons: Qt.RightButton | Qt.MiddleButton
         cursorShape: Qt.PointingHandCursor
+        // El click derecho es el de reactividad: despliega el detalle.
         onClicked: mouse => {
             if (mouse.button === Qt.MiddleButton)
                 monitor.showPercent = !monitor.showPercent;
