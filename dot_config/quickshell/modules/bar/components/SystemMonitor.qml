@@ -12,6 +12,9 @@ Rectangle {
     property real bottomRadius: 15
     property real barHeight: 34
 
+    // Alterna entre relleno de carga y porcentaje, para las tres a la vez.
+    property bool showPercent: false
+
     property int cpuUsage: 0
     property int memUsage: 0
     property int gpuUsage: 0
@@ -94,6 +97,12 @@ Rectangle {
         }
     }
 
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.MiddleButton
+        onClicked: monitor.showPercent = !monitor.showPercent
+    }
+
     RowLayout {
         id: row
         anchors.centerIn: parent
@@ -102,16 +111,19 @@ Rectangle {
         Stat {
             label: "CPU"
             value: monitor.cpuUsage
+            showPercent: monitor.showPercent
         }
 
         Stat {
             label: "RAM"
             value: monitor.memUsage
+            showPercent: monitor.showPercent
         }
 
         Stat {
             label: "GPU"
             value: monitor.gpuUsage
+            showPercent: monitor.showPercent
         }
     }
 }

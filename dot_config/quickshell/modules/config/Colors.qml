@@ -38,6 +38,26 @@ Singleton {
     // wallpaper no garantiza un rojo (hoy color1 es verde) y se perdería la
     // señal.
     readonly property color alert: "#f38ba8"
+
+    // Relleno de carga de las pills de sistema, con los mismos tramos que
+    // waybar. Son fijos y no de pywal: el código de color verde/amarillo/rojo
+    // tiene que leerse igual con cualquier wallpaper.
+    readonly property color loadLow: "#a6e3a1"
+    readonly property color loadMid: "#f9e2af"
+    readonly property color loadHigh: "#fab387"
+    readonly property color loadCritical: "#f38ba8"
+    // Texto sobre el relleno claro.
+    readonly property color loadTextOnFill: "#11111b"
+
+    function loadColor(pct) {
+        if (pct < 50)
+            return root.loadLow;
+        if (pct < 65)
+            return root.loadMid;
+        if (pct < 80)
+            return root.loadHigh;
+        return root.loadCritical;
+    }
     // Un workspace vacío es un círculo sólido, no un hueco.
     readonly property color workspaceEmptyBg: Qt.alpha(root.color4, 0.55)
 
