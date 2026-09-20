@@ -45,8 +45,30 @@ Rectangle {
     // Streams de aplicaciones que están sonando.
     readonly property var streams: Pipewire.nodes.values.filter(n => n.isSink && n.isStream && n.audio)
 
+    // Alias para acortar los nombres que reporta pipewire, que son largos y
+    // poco legibles. Solo afectan a esta barra: el resto del sistema sigue
+    // viendo el nombre original. Se buscan por node.name, que es estable.
+    readonly property var deviceAliases: [
+        {
+            match: "hdmi",
+            label: "Headphones"
+        },
+        {
+            match: "analog-stereo",
+            label: "Speakers"
+        }
+    ]
+
     function nodeLabel(node) {
-        return node?.description || node?.name || "?";
+        const name = (node?.name ?? "").toLowerCase();
+
+        for (const alias of mixer.deviceAliases) {
+            if (name.includes(alias.match))
+                return alias.label;
+        }
+
+        // Sin alias: el nick es más corto que la descripción completa.
+        return node?.nickname || node?.description || node?.name || "?";
     }
 
     function percentOf(node) {
