@@ -10,6 +10,8 @@ Rectangle {
 
     // IDs que forman este grupo. Se muestran siempre, aunque estén vacíos.
     required property var workspaceIds
+    // Diámetro del círculo de un workspace vacío.
+    property real pillSize: 26
 
     implicitWidth: layout.implicitWidth + 20
     implicitHeight: layout.implicitHeight + 8
@@ -81,11 +83,20 @@ Rectangle {
                     id: pill
                     anchors.centerIn: parent
 
-                    implicitWidth: entryRow.implicitWidth + 16
-                    implicitHeight: entryRow.implicitHeight + 6
+                    // Vacío: círculo perfecto (ancho = alto), sin nada dentro.
+                    // Con ventanas: se alarga lo justo para los iconos.
+                    implicitHeight: workspaces.pillSize
+                    implicitWidth: entry.modelData.occupied ? Math.max(workspaces.pillSize, icons.implicitWidth + 18) : workspaces.pillSize
                     radius: height / 2
 
-                    color: entry.modelData.focused ? Colors.workspaceActiveBg : entry.containsMouse ? Colors.workspaceHoverBg : "transparent"
+                    color: entry.modelData.focused ? Colors.workspaceActiveBg : entry.containsMouse ? Colors.workspaceHoverBg : Colors.workspaceEmptyBg
+
+                    Behavior on implicitWidth {
+                        NumberAnimation {
+                            duration: 150
+                            easing.type: Easing.OutCubic
+                        }
+                    }
 
                     Behavior on color {
                         ColorAnimation {
@@ -93,24 +104,12 @@ Rectangle {
                         }
                     }
 
-                    RowLayout {
-                        id: entryRow
+                    WorkspaceButton {
+                        id: icons
                         anchors.centerIn: parent
-                        spacing: 6
 
-                        Text {
-                            text: entry.modelData.name
-                            // Un workspace vacío se ve más apagado que uno con ventanas.
-                            color: entry.modelData.focused ? Colors.workspaceActive : entry.modelData.occupied ? Colors.workspaceIdle : Qt.alpha(Colors.foreground, 0.3)
-                            font.family: "JetBrains Mono Nerd Font"
-                            font.pixelSize: 14
-                            font.bold: true
-                        }
-
-                        WorkspaceButton {
-                            workspaceId: entry.modelData.id
-                            iconColor: entry.modelData.focused ? Colors.workspaceActive : Colors.workspaceIdle
-                        }
+                        workspaceId: entry.modelData.id
+                        iconColor: entry.modelData.focused ? Colors.workspaceActive : Colors.workspaceIdle
                     }
                 }
             }

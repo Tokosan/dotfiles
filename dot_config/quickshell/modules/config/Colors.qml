@@ -33,6 +33,8 @@ Singleton {
     readonly property color workspaceActive: root.foreground
     readonly property color workspaceActiveBg: root.color4
     readonly property color workspaceHoverBg: Qt.alpha(root.foreground, 0.15)
+    // Un workspace vacío es un círculo sólido, no un hueco.
+    readonly property color workspaceEmptyBg: Qt.alpha(root.color4, 0.55)
 
     function load() {
         const raw = walFile.text();
