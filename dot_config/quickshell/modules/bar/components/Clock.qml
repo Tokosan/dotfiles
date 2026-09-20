@@ -8,11 +8,13 @@ Rectangle {
     id: clock
 
     property real hPadding: 14
-    property real vPadding: 4
     property real bottomRadius: 15
+    // Misma altura que el grupo de workspaces (pillSize + padding) para que
+    // las pills de la barra queden todas del mismo grosor.
+    property real barHeight: 34
 
     implicitWidth: row.implicitWidth + hPadding * 2
-    implicitHeight: row.implicitHeight + vPadding * 2
+    implicitHeight: barHeight
 
     color: Colors.barBackground
     bottomLeftRadius: bottomRadius
