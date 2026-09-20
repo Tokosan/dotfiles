@@ -17,6 +17,9 @@ Rectangle {
     readonly property PwNode sink: Pipewire.defaultAudioSink
     readonly property PwNode source: Pipewire.defaultAudioSource
 
+    // Panel del mezclador, desplegable con el click derecho.
+    property bool expanded: false
+
     implicitWidth: row.implicitWidth + hPadding * 2
     implicitHeight: barHeight
 
@@ -27,6 +30,14 @@ Rectangle {
     // Sin esto los nodos no reportan volumen ni mute.
     PwObjectTracker {
         objects: [volume.sink, volume.source]
+    }
+
+    // Click derecho en cualquier parte de la pill abre el mezclador. Va detrás
+    // de las zonas de cada canal, que solo aceptan el botón izquierdo.
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.RightButton
+        onClicked: volume.expanded = !volume.expanded
     }
 
     function percent(node) {
@@ -107,6 +118,41 @@ Rectangle {
         id: sinkIconOffMetrics
         font: sinkIcon.font
         text: "\u{f075f}"
+    }
+
+    // El mezclador cuelga bajo la pill sin participar de su layout, así no
+    // desplaza nada de la barra: la pill queda como el palo de una T.
+    VolumeMixer {
+        id: mixer
+        anchors.top: parent.bottom
+        anchors.topMargin: 6
+        anchors.right: parent.right
+
+        sink: volume.sink
+        source: volume.source
+
+        visible: opacity > 0
+        opacity: volume.expanded ? 1 : 0
+        // Se despliega desde arriba.
+        transform: Scale {
+            origin.x: mixer.width
+            origin.y: 0
+            yScale: volume.expanded ? 1 : 0.85
+            xScale: 1
+
+            Behavior on yScale {
+                NumberAnimation {
+                    duration: 160
+                    easing.type: Easing.OutCubic
+                }
+            }
+        }
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 160
+            }
+        }
     }
 
     RowLayout {

@@ -21,8 +21,10 @@ PanelWindow {
     color: "transparent"
 
     property real barHeight: 40
-    // Espacio para lo que se despliega bajo la barra.
-    property real expandRoom: 40
+    // Espacio para lo que se despliega bajo la barra (el mezclador de volumen
+    // es lo más alto y crece con la cantidad de apps sonando). No desplaza
+    // ventanas porque la zona exclusiva sigue siendo barHeight.
+    property real expandRoom: 460
 
     // La zona exclusiva se queda en la altura de la barra: lo que se expande
     // flota sobre las ventanas en vez de reacomodarlas.
