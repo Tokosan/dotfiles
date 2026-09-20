@@ -43,6 +43,12 @@ Singleton {
     // wallpaper no garantiza un verde reconocible.
     readonly property color accent: "#a6e3a1"
 
+    // Paneles flotantes: más opacos que la barra y con borde, porque se leen
+    // sobre el wallpaper y no sobre el fondo de la barra.
+    readonly property color panelBackground: Qt.alpha(root.background, 0.97)
+    readonly property color panelBorder: Qt.alpha(root.foreground, 0.22)
+    readonly property color panelShadow: "#000000"
+
     // Relleno de carga de las pills de sistema, con los mismos tramos que
     // waybar. Son fijos y no de pywal: el código de color verde/amarillo/rojo
     // tiene que leerse igual con cualquier wallpaper.

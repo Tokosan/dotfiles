@@ -1,6 +1,7 @@
 import Quickshell
 import Quickshell.Services.Pipewire
 import QtQuick
+import QtQuick.Effects
 import QtQuick.Layouts
 
 import "../../config"
@@ -17,8 +18,22 @@ Rectangle {
     implicitWidth: 300
     implicitHeight: content.implicitHeight + padding * 2
 
-    color: Colors.barBackground
+    // Más opaco que la barra: flota sobre el wallpaper y tiene que leerse.
+    color: Colors.panelBackground
     radius: radiusValue
+
+    border.width: 1
+    border.color: Colors.panelBorder
+
+    // La sombra necesita que el panel se renderice en su propia capa.
+    layer.enabled: true
+    layer.effect: MultiEffect {
+        shadowEnabled: true
+        shadowColor: Colors.panelShadow
+        shadowBlur: 0.7
+        shadowVerticalOffset: 4
+        shadowOpacity: 0.55
+    }
 
     // Todos los nodos deben estar registrados o no reportan volumen.
     PwObjectTracker {

@@ -33,7 +33,7 @@ Item {
             when: stat.expanded
 
             PropertyChanges {
-                stat.extraHeight: expandedPct.implicitHeight + 3
+                stat.extraHeight: pctChip.implicitHeight + 3
                 stat.pctOpacity: 1
             }
         }
@@ -136,9 +136,10 @@ Item {
         }
     }
 
-    // Porcentaje bajo la pill, visible solo al expandir.
-    Text {
-        id: expandedPct
+    // Porcentaje bajo la pill, visible solo al expandir. Lleva su propio fondo
+    // porque flota sobre el wallpaper, no sobre la barra.
+    Rectangle {
+        id: pctChip
         anchors.top: pill.bottom
         anchors.topMargin: 3
         anchors.horizontalCenter: pill.horizontalCenter
@@ -146,13 +147,24 @@ Item {
         visible: opacity > 0
         opacity: stat.pctOpacity
 
-        text: stat.value + "%"
-        color: Colors.foreground
-        font.family: "JetBrains Mono Nerd Font"
-        font.pixelSize: 10
-        font.bold: true
+        implicitWidth: expandedPct.implicitWidth + 10
+        implicitHeight: expandedPct.implicitHeight + 4
+        radius: height / 2
 
+        color: Colors.panelBackground
+        border.width: 1
+        border.color: Colors.panelBorder
 
+        Text {
+            id: expandedPct
+            anchors.centerIn: parent
+
+            text: stat.value + "%"
+            color: Colors.foreground
+            font.family: "JetBrains Mono Nerd Font"
+            font.pixelSize: 10
+            font.bold: true
+        }
     }
 
     TextMetrics {
