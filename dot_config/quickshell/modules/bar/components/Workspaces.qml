@@ -116,7 +116,14 @@ Rectangle {
                         anchors.centerIn: parent
 
                         workspaceId: entry.modelData.id
-                        iconColor: entry.modelData.focused ? Colors.workspaceActive : Colors.workspaceIdle
+                        // También se ilumina al pasar el mouse, no solo al estar enfocado.
+                        iconColor: entry.modelData.focused || entry.containsMouse ? Colors.workspaceActive : Colors.workspaceIdle
+
+                        Behavior on iconColor {
+                            ColorAnimation {
+                                duration: 120
+                            }
+                        }
                     }
                 }
             }

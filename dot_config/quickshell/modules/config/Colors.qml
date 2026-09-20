@@ -31,10 +31,11 @@ Singleton {
     // Opaca: sin blur del compositor detrás, cualquier transparencia deja
     // asomar el wallpaper y ensucia la lectura.
     readonly property color barBackground: root.background
-    readonly property color workspaceIdle: Qt.alpha(root.foreground, 0.55)
+    readonly property color workspaceIdle: Qt.alpha(root.foreground, 0.85)
     readonly property color workspaceActive: root.foreground
-    readonly property color workspaceActiveBg: root.color4
-    readonly property color workspaceHoverBg: Qt.alpha(root.foreground, 0.15)
+    // Intercambiados: el enfocado lleva el tono claro y el hover el base.
+    readonly property color workspaceActiveBg: Qt.lighter(root.color4, 1.45)
+    readonly property color workspaceHoverBg: root.color4
 
     // Alerta (mute). Es un rojo fijo y no un colorN de pywal: la paleta del
     // wallpaper no garantiza un rojo (hoy color1 es verde) y se perdería la
