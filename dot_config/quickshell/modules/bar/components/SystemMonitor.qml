@@ -23,6 +23,12 @@ Rectangle {
     property int memUsage: 0
     property int gpuUsage: 0
 
+    // Detalle que se muestra al expandir.
+    property int cpuTemp: 0
+    property int gpuTemp: 0
+    property real memUsedGb: 0
+    property real memTotalGb: 0
+
     // /proc/stat trae contadores acumulados: el uso real es la diferencia
     // entre dos lecturas.
     property var lastCpu: null
@@ -31,7 +37,7 @@ Rectangle {
     implicitHeight: barHeight + (expanded ? expandExtra : 0)
 
     // Cuánto crece la pill al expandirse.
-    readonly property real expandExtra: 16
+    readonly property real expandExtra: 36
 
     Behavior on implicitHeight {
         NumberAnimation {
@@ -130,8 +136,13 @@ Rectangle {
     function readMem(text) {
         const total = Number(text.match(/MemTotal:\s+(\d+)/)?.[1] ?? 0);
         const available = Number(text.match(/MemAvailable:\s+(\d+)/)?.[1] ?? 0);
-        if (total > 0)
-            monitor.memUsage = Math.round((1 - available / total) * 100);
+        if (total <= 0)
+            return;
+
+        monitor.memUsage = Math.round((1 - available / total) * 100);
+        // /proc/meminfo viene en kB.
+        monitor.memTotalGb = total / 1048576;
+        monitor.memUsedGb = (total - available) / 1048576;
     }
 
     FileView {
@@ -144,15 +155,43 @@ Rectangle {
         path: "/proc/meminfo"
     }
 
+    // Promedio de los sensores por core. Se excluye el del package, que es
+    // otra medida y no un core más.
     Process {
-        id: gpuProcess
-        command: ["nvidia-smi", "--query-gpu=utilization.gpu", "--format=csv,noheader,nounits"]
+        id: cpuTempProcess
+        command: ["sh", "-c", `
+            for h in /sys/class/hwmon/hwmon*; do
+                [ "$(cat "$h/name" 2>/dev/null)" = "coretemp" ] || \
+                [ "$(cat "$h/name" 2>/dev/null)" = "k10temp" ] || continue
+                for f in "$h"/temp*_input; do
+                    [ -f "$f" ] || continue
+                    label=$(cat "\${f%_input}_label" 2>/dev/null)
+                    case "$label" in *Package*|*Tctl*) continue;; esac
+                    cat "$f"
+                done
+            done | awk '{ sum += $1; n++ } END { if (n > 0) print int(sum / n / 1000) }'
+        `]
 
         stdout: StdioCollector {
             onStreamFinished: {
                 const value = parseInt(text.trim());
                 if (!isNaN(value))
-                    monitor.gpuUsage = value;
+                    monitor.cpuTemp = value;
+            }
+        }
+    }
+
+    Process {
+        id: gpuProcess
+        command: ["nvidia-smi", "--query-gpu=utilization.gpu,temperature.gpu", "--format=csv,noheader,nounits"]
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const parts = text.trim().split(",").map(v => parseInt(v.trim()));
+                if (!isNaN(parts[0]))
+                    monitor.gpuUsage = parts[0];
+                if (!isNaN(parts[1]))
+                    monitor.gpuTemp = parts[1];
             }
         }
     }
@@ -170,6 +209,7 @@ Rectangle {
             monitor.readCpu(statFile.text());
             monitor.readMem(memFile.text());
             gpuProcess.running = true;
+            cpuTempProcess.running = true;
         }
     }
 
@@ -189,7 +229,7 @@ Rectangle {
     RowLayout {
         id: row
         anchors.top: parent.top
-        anchors.topMargin: (monitor.barHeight - 26) / 2
+        anchors.topMargin: (monitor.barHeight - 30) / 2
         anchors.horizontalCenter: parent.horizontalCenter
         spacing: 6
 
@@ -198,6 +238,7 @@ Rectangle {
             value: monitor.cpuUsage
             showPercent: monitor.showPercent
             expanded: monitor.expanded
+            detail: monitor.cpuTemp > 0 ? monitor.cpuTemp + "\u00b0C" : ""
         }
 
         Stat {
@@ -205,6 +246,7 @@ Rectangle {
             value: monitor.memUsage
             showPercent: monitor.showPercent
             expanded: monitor.expanded
+            detail: monitor.memTotalGb > 0 ? monitor.memUsedGb.toFixed(1) + "/" + monitor.memTotalGb.toFixed(0) + "G" : ""
         }
 
         Stat {
@@ -212,6 +254,7 @@ Rectangle {
             value: monitor.gpuUsage
             showPercent: monitor.showPercent
             expanded: monitor.expanded
+            detail: monitor.gpuTemp > 0 ? monitor.gpuTemp + "\u00b0C" : ""
         }
     }
 }

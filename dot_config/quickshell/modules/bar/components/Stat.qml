@@ -13,8 +13,10 @@ Item {
     required property bool showPercent
     // Muestra el porcentaje bajo la pill, fuera de ella.
     required property bool expanded
+    // Línea extra bajo el porcentaje (temperatura, uso en GB…).
+    property string detail: ""
 
-    property real pillHeight: 26
+    property real pillHeight: 30
     // Cuánto tarda el porcentaje en aparecer o desvanecerse.
     property real fadeDuration: 120
 
@@ -147,21 +149,36 @@ Item {
         visible: opacity > 0
         opacity: stat.pctOpacity
 
-        implicitWidth: expandedPct.implicitWidth
-        implicitHeight: expandedPct.implicitHeight + 2
+        implicitWidth: detailColumn.implicitWidth
+        implicitHeight: detailColumn.implicitHeight + 2
         radius: height / 2
 
         color: "transparent"
 
-        Text {
-            id: expandedPct
+        Column {
+            id: detailColumn
             anchors.centerIn: parent
+            spacing: 1
 
-            text: stat.value + "%"
-            color: Colors.foreground
-            font.family: "JetBrains Mono Nerd Font"
-            font.pixelSize: 10
-            font.bold: true
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+
+                text: stat.value + "%"
+                color: Colors.foreground
+                font.family: "JetBrains Mono Nerd Font"
+                font.pixelSize: 12
+                font.bold: true
+            }
+
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+
+                visible: stat.detail.length > 0
+                text: stat.detail
+                color: Qt.alpha(Colors.foreground, 0.65)
+                font.family: "JetBrains Mono Nerd Font"
+                font.pixelSize: 10
+            }
         }
     }
 
