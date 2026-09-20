@@ -47,7 +47,9 @@ Item {
             icon: "\u{f11c}"
         },
         {
-            match: cls => cls.startsWith("steam_app"),
+            // Juegos de steam (proton) y ejecutables nativos: valheim.x86_64,
+            // algo.exe y similares suelen ser juegos lanzados fuera de proton.
+            match: cls => cls.startsWith("steam_app") || cls.endsWith(".x86_64") || cls.endsWith(".x86") || cls.endsWith(".exe") || cls.endsWith(".bin"),
             icon: "\u{f05ba}"
         },
         {
