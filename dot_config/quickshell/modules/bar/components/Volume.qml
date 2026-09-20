@@ -29,7 +29,7 @@ Rectangle {
 
     // Sin esto los nodos no reportan volumen ni mute.
     PwObjectTracker {
-        objects: [volume.sink, volume.source]
+        objects: Pipewire.nodes.values
     }
 
     // Click derecho en cualquier parte de la pill abre el mezclador. Va detrás
@@ -46,6 +46,19 @@ Rectangle {
 
     function label(node) {
         return node?.audio?.muted ? "---" : volume.percent(node) + "%";
+    }
+
+    // Dispositivos de salida disponibles, ordenados por id para que el ciclo
+    // sea estable entre invocaciones.
+    readonly property var sinks: Pipewire.nodes.values.filter(n => n.isSink && !n.isStream && n.audio).sort((a, b) => a.id - b.id)
+
+    function cycleSink() {
+        const list = volume.sinks;
+        if (list.length < 2)
+            return;
+
+        const current = list.findIndex(n => n.id === volume.sink?.id);
+        Pipewire.preferredDefaultAudioSink = list[(current + 1) % list.length];
     }
 
     function toggleMute(node) {
@@ -191,7 +204,14 @@ Rectangle {
             implicitHeight: sinkPct.implicitHeight
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: volume.toggleMute(volume.sink)
+            acceptedButtons: Qt.LeftButton | Qt.MiddleButton
+            // Izquierdo mutea, medio pasa al siguiente dispositivo de salida.
+            onClicked: mouse => {
+                if (mouse.button === Qt.MiddleButton)
+                    volume.cycleSink();
+                else
+                    volume.toggleMute(volume.sink);
+            }
             onWheel: wheel => volume.scrollVolume(volume.sink, wheel.angleDelta.y)
 
             Text {
