@@ -16,7 +16,11 @@ Rectangle {
     implicitHeight: barHeight
 
     color: Colors.barBackground
-    bottomLeftRadius: bottomRadius
+    // Ocupa la esquina entera, como en waybar: solo se curva hacia adentro,
+    // por eso la inferior izquierda va pegada al canto.
+    topLeftRadius: 0
+    topRightRadius: 0
+    bottomLeftRadius: 0
     bottomRightRadius: bottomRadius
 
     MouseArea {

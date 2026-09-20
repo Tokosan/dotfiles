@@ -5,8 +5,8 @@ local secondMod = "CTRL + SHIFT + ALT + SUPER"
 -- Main bindings
 hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen(), { desc = "Fullscreen" })
 hl.bind(mainMod .. " + W", hl.dsp.window.close(), { desc = "Close Active Window" })
-hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("pkill waybar; hyprctl dispatch exec waybar"), { desc = "Reload Waybar" })
-hl.bind(mainMod .. " + SHIFT + CONTROL + Q", hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch exit"), { desc = "Exit Hyprland", long_press = true })
+hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("pkill -x qs; sleep 0.2; qs -p /home/tokosan/.config/quickshell"), { desc = "Reload Quickshell" })
+hl.bind(mainMod .. " + SHIFT + CONTROL + Q", hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'"), { desc = "Exit Hyprland", long_press = true })
 hl.bind(mainMod .. " + SHIFT + CONTROL + L", hl.dsp.exec_cmd("hyprlock --grace 10"), { desc = "Lock screen" })
 
 -- Tiling
@@ -40,8 +40,8 @@ hl.bind(mainMod .. " + SHIFT + K", hl.dsp.window.swap({ direction = "up" }), { d
 hl.bind(mainMod .. " + SHIFT + J", hl.dsp.window.swap({ direction = "down" }), { desc = "Swap window down" })
 
 -- Move/resize windows with mainMod + LMB/RMB and dragging
-hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(), { drag = true })
-hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { drag = true })
+hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })
+hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
 
 -- Resize active window
 hl.bind(mainMod .. " + CTRL + Left", hl.dsp.window.resize({ x = -20, y = 0, relative = true }), { repeating = true })

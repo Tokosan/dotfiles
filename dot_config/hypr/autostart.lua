@@ -1,5 +1,5 @@
 hl.on("hyprland.start", function()
-    hl.exec_cmd("waybar")
+    hl.exec_cmd("qs -p /home/tokosan/.config/quickshell")
     hl.exec_cmd("awww-daemon")
     hl.exec_cmd("dbus-update-activation-environment")
     -- hl.exec_cmd("sleep 1 && hyprlock")

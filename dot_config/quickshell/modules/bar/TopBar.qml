@@ -47,8 +47,10 @@ PanelWindow {
         }
     }
 
+    // Sin margen izquierdo: el botón de la esquina va pegado al canto. El
+    // respiro de los workspaces lo pone el propio RowLayout.
     margins {
-        left: 10
+        left: 0
         right: 10
         top: 0
     }
@@ -119,6 +121,7 @@ PanelWindow {
         StarButton {
             id: starButton
             Layout.alignment: Qt.AlignTop | Qt.AlignLeft
+            Layout.rightMargin: 6
 
             onSecondaryAction: {
                 if (globalMenu.open)
