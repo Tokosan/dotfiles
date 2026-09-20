@@ -31,7 +31,7 @@ Rectangle {
         spacing: 10
 
         Text {
-            text: Qt.formatDateTime(systemClock.date, "dddd, dd 'of' MMMM")
+            text: Qt.formatDateTime(systemClock.date, "yyyy-MM-dd")
             color: Colors.foreground
             font.family: "JetBrains Mono Nerd Font"
             font.pixelSize: 13
