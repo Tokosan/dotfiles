@@ -58,11 +58,22 @@ Rectangle {
 
         // Entrada (micrófono)
         MouseArea {
-            implicitWidth: micText.implicitWidth
+            // Ancho fijo con el máximo de ambos estados: el texto de mute es
+            // un par de píxeles más ancho y si no la pill saltaría al mutear.
+            implicitWidth: Math.max(micText.implicitWidth, micMetrics.implicitWidth)
             implicitHeight: micText.implicitHeight
             cursorShape: Qt.PointingHandCursor
             onClicked: volume.toggleMute(volume.source)
             onWheel: wheel => volume.scrollVolume(volume.source, wheel.angleDelta.y)
+
+            // Solo para medir: nunca se dibuja.
+            Text {
+                id: micMetrics
+                visible: false
+
+                text: "--- \u{f036d}"
+                font: micText.font
+            }
 
             Text {
                 id: micText
@@ -78,11 +89,20 @@ Rectangle {
 
         // Salida (altavoces)
         MouseArea {
-            implicitWidth: sinkText.implicitWidth
+            implicitWidth: Math.max(sinkText.implicitWidth, sinkMetrics.implicitWidth)
             implicitHeight: sinkText.implicitHeight
             cursorShape: Qt.PointingHandCursor
             onClicked: volume.toggleMute(volume.sink)
             onWheel: wheel => volume.scrollVolume(volume.sink, wheel.angleDelta.y)
+
+            // Solo para medir: el caso más ancho es el volumen de tres cifras.
+            Text {
+                id: sinkMetrics
+                visible: false
+
+                text: "\u{f057e} 100%"
+                font: sinkText.font
+            }
 
             Text {
                 id: sinkText
