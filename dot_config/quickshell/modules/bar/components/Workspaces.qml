@@ -39,12 +39,14 @@ Rectangle {
         }
 
         for (const ws of Hyprland.workspaces.values) {
-            // Solo los IDs de este grupo (esto ya excluye los special, id < 0).
-            if (!workspaces.workspaceIds.includes(ws.id))
+            // Se compara por name porque un workspace descubierto vía toplevel
+            // llega con id = -1; el name en cambio siempre viene bien.
+            const wsId = parseInt(ws.name);
+            if (isNaN(wsId) || !workspaces.workspaceIds.includes(wsId))
                 continue;
 
-            byId[ws.id] = {
-                id: ws.id,
+            byId[wsId] = {
+                id: wsId,
                 name: ws.name,
                 focused: ws.focused,
                 urgent: ws.urgent,
@@ -72,12 +74,9 @@ Rectangle {
                 implicitHeight: pill.implicitHeight
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                    if (entry.modelData.ws)
-                        entry.modelData.ws.activate();
-                    else
-                        Hyprland.dispatch('hl.dsp.focus({ workspace = ' + entry.modelData.id + ' })');
-                }
+                // Siempre por dispatch: activate() actuaría sobre un objeto que
+                // puede traer id = -1 y enfocar el workspace equivocado.
+                onClicked: Hyprland.dispatch('hl.dsp.focus({ workspace = ' + entry.modelData.id + ' })')
 
                 Rectangle {
                     id: pill
