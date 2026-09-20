@@ -22,7 +22,7 @@ Rectangle {
     color: Colors.panelBackground
     radius: radiusValue
 
-    border.width: 1
+    border.width: 2
     border.color: Colors.panelBorder
 
     // La sombra necesita que el panel se renderice en su propia capa.

@@ -147,13 +147,11 @@ Item {
         visible: opacity > 0
         opacity: stat.pctOpacity
 
-        implicitWidth: expandedPct.implicitWidth + 10
-        implicitHeight: expandedPct.implicitHeight + 4
+        implicitWidth: expandedPct.implicitWidth
+        implicitHeight: expandedPct.implicitHeight + 2
         radius: height / 2
 
-        color: Colors.panelBackground
-        border.width: 1
-        border.color: Colors.panelBorder
+        color: "transparent"
 
         Text {
             id: expandedPct

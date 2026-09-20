@@ -1,6 +1,7 @@
 import Quickshell
 import Quickshell.Io
 import QtQuick
+import QtQuick.Shapes
 import QtQuick.Layouts
 
 import "../../config"
@@ -11,6 +12,7 @@ Rectangle {
     property real hPadding: 10
     property real bottomRadius: 15
     property real barHeight: 34
+    property real borderWidth: 2
 
     // Alterna entre relleno de carga y porcentaje, para las tres a la vez.
     property bool showPercent: false
@@ -41,6 +43,67 @@ Rectangle {
     color: Colors.barBackground
     bottomLeftRadius: bottomRadius
     bottomRightRadius: bottomRadius
+
+    // Al expandirse la pill queda flotando sobre el wallpaper, así que se
+    // perfila con un borde. Se traza con Shape y no con border.width porque
+    // arriba no lleva: la pill cuelga del borde de la pantalla y ahí no hay
+    // nada de lo que separarla.
+    Shape {
+        anchors.fill: parent
+        preferredRendererType: Shape.CurveRenderer
+
+        opacity: monitor.expanded ? 1 : 0
+        visible: opacity > 0
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 160
+            }
+        }
+
+        ShapePath {
+            strokeColor: Colors.panelBorder
+            strokeWidth: monitor.borderWidth
+            fillColor: "transparent"
+            capStyle: ShapePath.FlatCap
+
+            // Baja por la izquierda, curva, cruza abajo, curva y sube por la
+            // derecha. El tramo superior queda abierto.
+            startX: monitor.borderWidth / 2
+            startY: 0
+
+            PathLine {
+                x: monitor.borderWidth / 2
+                y: monitor.height - monitor.bottomRadius
+            }
+
+            PathArc {
+                x: monitor.bottomRadius
+                y: monitor.height - monitor.borderWidth / 2
+                radiusX: monitor.bottomRadius
+                radiusY: monitor.bottomRadius
+                direction: PathArc.Counterclockwise
+            }
+
+            PathLine {
+                x: monitor.width - monitor.bottomRadius
+                y: monitor.height - monitor.borderWidth / 2
+            }
+
+            PathArc {
+                x: monitor.width - monitor.borderWidth / 2
+                y: monitor.height - monitor.bottomRadius
+                radiusX: monitor.bottomRadius
+                radiusY: monitor.bottomRadius
+                direction: PathArc.Counterclockwise
+            }
+
+            PathLine {
+                x: monitor.width - monitor.borderWidth / 2
+                y: 0
+            }
+        }
+    }
 
     function readCpu(text) {
         const line = text.split("\n")[0];
