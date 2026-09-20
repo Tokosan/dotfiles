@@ -49,7 +49,8 @@ Item {
             icon: "\u{f1b6}"
         },
         {
-            match: cls => cls === "spotify",
+            // Incluye la web app de Chrome (chrome-spotify.com__-Default).
+            match: cls => cls.includes("spotify"),
             icon: "\u{f1bc}"
         },
         {
