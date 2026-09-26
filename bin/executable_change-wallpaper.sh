@@ -18,6 +18,10 @@ LN_PATH=~/media/images/wallpapers/unsorted/current-wallpaper
 LOCK_LN_PATH=~/media/images/wallpapers/unsorted/current-lockscreen
 LOCK_CACHE_DIR=~/.cache/lockscreens
 THUMB_CACHE_DIR=~/.cache/wallpaper-thumbs
+# Los colores del sistema son globales pero cada pantalla puede tener su propio
+# fondo, así que sólo el monitor principal decide el tema.
+THEME_MONITOR="DP-1"
+MONITOR="all"
 WORKSHOP_DIR=~/.local/share/Steam/steamapps/workshop/content/431960
 
 function log() {
@@ -89,11 +93,17 @@ function create_link() {
 }
 
 function set_wallpaper() {
-  log INFO "Setting wallpaper via awww"
+  local mon="$1"
+  log INFO "Setting wallpaper via awww on $mon"
   # Un fondo animado activo taparía al estático: se quita antes.
-  wallpaper-video stop >/dev/null 2>&1
-  wallpaper-scene stop >/dev/null 2>&1
-  if awww img "$LN_PATH" --transition-duration 0.5 --transition-type any ; then
+  wallpaper-video stop --monitor "$mon" >/dev/null 2>&1
+  wallpaper-scene stop --monitor "$mon" >/dev/null 2>&1
+
+  # awww necesita el nombre de la salida; sin -o pinta en todas.
+  local outputs=()
+  [ "$mon" != "all" ] && outputs=(-o "$mon")
+
+  if awww img "${outputs[@]}" "$LN_PATH" --transition-duration 0.5 --transition-type any ; then
     log INFO "Wallpaper set successfully"
   else
     log ERROR "Failed to set wallpaper (awww exit code: $?)"
@@ -101,8 +111,8 @@ function set_wallpaper() {
 }
 
 function set_video() {
-  log INFO "Setting video wallpaper: $1"
-  if wallpaper-video start "$1" >/dev/null 2>&1; then
+  log INFO "Setting video wallpaper on $2: $1"
+  if wallpaper-video start --monitor "$2" "$1" >/dev/null 2>&1; then
     log INFO "Video wallpaper started"
   else
     log ERROR "Failed to start video wallpaper (exit code: $?)"
@@ -110,8 +120,8 @@ function set_video() {
 }
 
 function set_scene() {
-  log INFO "Setting Wallpaper Engine scene: $1"
-  if wallpaper-scene start "$1" >/dev/null 2>&1; then
+  log INFO "Setting Wallpaper Engine scene on $2: $1"
+  if wallpaper-scene start --monitor "$2" "$1" >/dev/null 2>&1; then
     log INFO "Scene started"
   else
     log ERROR "Failed to start scene (exit code: $?)"
@@ -179,9 +189,26 @@ function create_lock_file() {
 }
 
 function main() {
-  local target kind still
+  local target kind still rest=()
+
   target="$1"
   shift
+
+  # --monitor puede venir en cualquier posición; el resto de flags se procesan
+  # después, cuando ya se sabe sobre qué pantalla se aplicó.
+  while [ $# -gt 0 ]; do
+    case $1 in
+      --monitor | -m)
+        MONITOR="${2:?--monitor necesita un nombre}"
+        shift 2
+        ;;
+      *)
+        rest+=("$1")
+        shift
+        ;;
+    esac
+  done
+  set -- "${rest[@]+"${rest[@]}"}"
 
   kind=$(detect_kind "$target")
 
@@ -189,28 +216,38 @@ function main() {
   [ "$kind" != "scene" ] && target=$(readlink -f "$target")
 
   still=$(still_for "$kind" "$target")
-  log INFO "Tipo: $kind | imagen fija: ${still:-(ninguna)}"
+  log INFO "Tipo: $kind | monitor: $MONITOR | imagen fija: ${still:-(ninguna)}"
 
   case "$kind" in
     image)
       create_link "$target"
-      set_wallpaper
+      set_wallpaper "$MONITOR"
       ;;
     video)
-      set_video "$target"
+      set_video "$target" "$MONITOR"
       ;;
     scene)
-      set_scene "$target"
+      set_scene "$target" "$MONITOR"
       ;;
   esac
 
   while [ $# -gt 0 ]; do
     case $1 in
       --wal | -w)
-        apply_pywal "$still"
+        # El tema es global: sólo lo redefine la pantalla principal, para que
+        # cambiar el fondo de la otra no recoloree el escritorio entero.
+        if [ "$MONITOR" = "all" ] || [ "$MONITOR" = "$THEME_MONITOR" ]; then
+          apply_pywal "$still"
+        else
+          log INFO "Sin pywal: $MONITOR no es la pantalla del tema ($THEME_MONITOR)"
+        fi
         ;;
       --lock-file | -l)
-        create_lock_file "$still"
+        if [ "$MONITOR" = "all" ] || [ "$MONITOR" = "$THEME_MONITOR" ]; then
+          create_lock_file "$still"
+        else
+          log INFO "Sin lockscreen: $MONITOR no es la pantalla del tema"
+        fi
         ;;
       *)
         log WARN "Unknown flag: $1"

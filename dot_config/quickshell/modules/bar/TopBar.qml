@@ -68,6 +68,9 @@ PanelWindow {
     GlobalMenu {
         id: globalMenu
 
+        // `screen` lo inyecta Variants con el monitor de esta barra.
+        monitor: topPanel.screen ? topPanel.screen.name : ""
+
         property bool open: false
 
         anchors.top: content.bottom

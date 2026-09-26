@@ -1,35 +1,100 @@
 #!/usr/bin/env bash
-# Controla el fondo de pantalla animado (mpvpaper) del monitor DP-1.
+# Controla el fondo de pantalla animado (mpvpaper), por monitor.
 #
 #   wallpaper-video start [archivo]  Lanza el fondo (aleatorio si no se indica archivo)
 #   wallpaper-video stop             Lo detiene y restaura el fondo estático de awww
 #   wallpaper-video toggle           Alterna entre animado y estático
 #   wallpaper-video next             Salta a otro vídeo al azar
+#
+#   -m, --monitor <nombre|all|focused>   Sobre qué pantalla actuar (por defecto: all)
 set -euo pipefail
 
-MONITOR="DP-1"
 DIR="$HOME/media/videos/wallpapers"
-SOCKET="/tmp/mpvpaper-${MONITOR}.sock"
+MONITOR="all"
 
-random_video() {
-    find "$DIR" -type f \( -iname '*.mp4' -o -iname '*.webm' -o -iname '*.mkv' \) \
-        | shuf -n1
+# Los flags pueden ir antes o después del subcomando.
+args=()
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -m | --monitor)
+            MONITOR="${2:?--monitor necesita un nombre}"
+            shift 2
+            ;;
+        *)
+            args+=("$1")
+            shift
+            ;;
+    esac
+done
+set -- "${args[@]+"${args[@]}"}"
+
+monitors() {
+    case "$MONITOR" in
+        all)
+            hyprctl monitors -j 2>/dev/null |
+                python3 -c 'import json,sys; [print(m["name"]) for m in json.load(sys.stdin)]' 2>/dev/null
+            ;;
+        focused)
+            # Se resuelve aquí y no en la config de Hyprland: allí la
+            # sustitución ocurriría al cargar, fijando el monitor del arranque.
+            hyprctl monitors -j 2>/dev/null |
+                python3 -c 'import json,sys; [print(m["name"]) for m in json.load(sys.stdin) if m.get("focused")]' 2>/dev/null
+            ;;
+        *)
+            printf '%s\n' "$MONITOR"
+            ;;
+    esac
 }
 
-# -x limita la búsqueda al ejecutable, para no encontrarnos a nosotros mismos
-# ni al shell que nos invoca: sus líneas de comando también contienen "mpvpaper".
-# Alcanza a todas las instancias, no sólo a la de $MONITOR: basta mientras haya
-# un único fondo animado. Con uno por monitor habría que filtrar por su socket.
+socket_for() {
+    printf '/tmp/mpvpaper-%s.sock' "$1"
+}
+
+random_video() {
+    find "$DIR" -type f \( -iname '*.mp4' -o -iname '*.webm' -o -iname '*.mkv' \) |
+        shuf -n1
+}
+
+# Los PIDs de mpvpaper de un monitor concreto. mpvpaper recibe el monitor como
+# argumento propio, así que la línea de comando distingue instancias; `pgrep -x`
+# sólo mira el nombre del ejecutable y las confundiría entre sí.
+pids_of() {
+    pgrep -f "mpvpaper .* -f $1 " 2>/dev/null || true
+}
+
 pids() {
-    pgrep -x mpvpaper 2>/dev/null || true
+    local mon
+    for mon in $(monitors); do
+        pids_of "$mon"
+    done
 }
 
 running() {
     [[ -n "$(pids)" ]]
 }
 
+stop_monitor() {
+    local mon="$1" p
+    p="$(pids_of "$mon")"
+
+    if [[ -n "$p" ]]; then
+        kill $p 2>/dev/null || true
+        # Esperamos a que muera: kill sólo pide la terminación, y si seguimos
+        # de inmediato la siguiente comprobación aún lo ve vivo.
+        for _ in $(seq 20); do
+            [[ -z "$(pids_of "$mon")" ]] && break
+            sleep 0.1
+        done
+        [[ -n "$(pids_of "$mon")" ]] && kill -9 $(pids_of "$mon") 2>/dev/null || true
+    fi
+
+    rm -f "$(socket_for "$mon")"
+}
+
 start() {
-    local video="${1:-$(random_video)}"
+    local video="${1:-}" mon
+
+    [[ -z "$video" ]] && video="$(random_video)"
 
     if [[ -z "$video" ]]; then
         printf 'No hay vídeos en %s\n' "$DIR" >&2
@@ -37,52 +102,44 @@ start() {
         exit 1
     fi
 
-    stop_quiet
-    # Un solo fondo animado a la vez: si hay una scene puesta, la quitamos.
-    pkill -f 'linux-wallpaperengine --screen-root' 2>/dev/null || true
+    for mon in $(monitors); do
+        stop_monitor "$mon"
+        # Un solo fondo animado por pantalla: si hay una scene ahí, la quitamos.
+        wallpaper-scene stop --monitor "$mon" >/dev/null 2>&1 || true
 
-    # panscan=1 recorta en lugar de dejar bandas cuando la relación de aspecto no cuadra.
-    # setsid lo desacopla de este shell: si no, al salir el script el proceso
-    # queda huérfano y recibe SIGHUP.
-    setsid -f mpvpaper -o "no-audio loop hwdec=auto panscan=1.0 video-sync=display-resample \
-input-ipc-server=${SOCKET}" \
-        -f "$MONITOR" "$video"
+        # panscan=1 recorta en lugar de dejar bandas cuando la relación de aspecto no cuadra.
+        # setsid lo desacopla de este shell: si no, al salir el script el proceso
+        # queda huérfano y recibe SIGHUP.
+        setsid -f mpvpaper -o "no-audio loop hwdec=auto panscan=1.0 video-sync=display-resample \
+input-ipc-server=$(socket_for "$mon")" \
+            -f "$mon" "$video"
 
-    printf 'Fondo animado en %s: %s\n' "$MONITOR" "$(basename "$video")"
-}
-
-stop_quiet() {
-    local p
-    p="$(pids)"
-    if [[ -n "$p" ]]; then
-        kill $p 2>/dev/null || true
-        # Esperamos a que muera: kill sólo pide la terminación, y si seguimos
-        # de inmediato la siguiente comprobación aún lo ve vivo.
-        for _ in $(seq 20); do
-            [[ -z "$(pids)" ]] && break
-            sleep 0.1
-        done
-        [[ -n "$(pids)" ]] && kill -9 $(pids) 2>/dev/null || true
-    fi
-    rm -f "$SOCKET"
+        printf 'Fondo animado en %s: %s\n' "$mon" "$(basename "$video")"
+    done
 }
 
 stop() {
-    stop_quiet
-    # Devuelve el monitor al fondo estático que tenía awww.
+    local mon
+    for mon in $(monitors); do
+        stop_monitor "$mon"
+        printf 'Fondo animado detenido en %s\n' "$mon"
+    done
+    # Devuelve las pantallas al fondo estático que tenía awww.
     awww restore 2>/dev/null || true
-    printf 'Fondo animado detenido en %s\n' "$MONITOR"
 }
 
 case "${1:-toggle}" in
-    start) shift; start "${1:-}" ;;
-    stop)  stop ;;
-    next)  start ;;
+    start)
+        shift
+        start "${1:-}"
+        ;;
+    stop) stop ;;
+    next) start ;;
     toggle)
         if running; then stop; else start; fi
         ;;
     *)
-        printf 'Uso: %s {start|stop|toggle|next} [archivo]\n' "${0##*/}" >&2
+        printf 'Uso: %s [-m <monitor|all|focused>] {start|stop|toggle|next} [archivo]\n' "${0##*/}" >&2
         exit 1
         ;;
 esac

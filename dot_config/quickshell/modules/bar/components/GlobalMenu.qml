@@ -2,11 +2,16 @@ import Quickshell
 import Quickshell.Io
 import QtQuick
 import QtQuick.Layouts
+import QtMultimedia
 
 import "../../config"
 
 Rectangle {
     id: menu
+
+    // La pantalla de la barra que contiene este menú, para que el selector de
+    // wallpapers sepa dónde aplicar.
+    required property string monitor
 
     // "menu" muestra las opciones; "wallpaper" reemplaza el panel por la
     // grilla de miniaturas.
@@ -49,7 +54,10 @@ Rectangle {
             Layout.fillWidth: true
             icon: "\u{f03e}"
             label: "Wallpaper"
-            onTriggered: menu.view = "wallpaper"
+            onTriggered: {
+                menu.view = "wallpaper";
+                enterSound.play();
+            }
         }
 
         MenuEntry {
@@ -81,9 +89,17 @@ Rectangle {
         }
     }
 
+    // Mismo chime que el botón de la estrella, más suave.
+    SoundEffect {
+        id: enterSound
+        source: Qt.resolvedUrl("../../../assets/chime.wav")
+        volume: 0.25
+    }
+
     // ── Vista: grilla de wallpapers ───────────────────────────────────
     WallpaperGrid {
         id: wallpaperView
+        monitor: menu.monitor
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top

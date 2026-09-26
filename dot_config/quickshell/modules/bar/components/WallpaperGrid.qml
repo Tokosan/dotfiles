@@ -2,6 +2,7 @@ import Quickshell
 import Quickshell.Io
 import QtQuick
 import QtQuick.Layouts
+import QtMultimedia
 
 import "../../config"
 
@@ -9,6 +10,10 @@ Item {
     id: grid
 
     signal back
+
+    // La pantalla donde vive esta barra: el fondo se aplica donde se hizo
+    // click, sin tener que elegir el monitor a mano.
+    required property string monitor
 
     readonly property string home: Quickshell.env("HOME")
     readonly property string directory: `${home}/media/images/wallpapers/unsorted`
@@ -32,13 +37,28 @@ Item {
     implicitHeight: header.implicitHeight + 6 + tabs.implicitHeight + 6 + view.height
 
     function apply(entry) {
-        applyProcess.command = [grid.script, entry.path, "--wal", "--lock-file"];
+        applyProcess.command = [grid.script, entry.path, "--monitor", grid.monitor, "--wal", "--lock-file"];
         applyProcess.running = true;
         grid.current = entry.path;
+        applySound.play();
     }
 
     Process {
         id: applyProcess
+    }
+
+    // Mismo chime que el botón de la estrella, a distinto volumen y tono según
+    // el peso de la acción: cambiar de pestaña pesa menos que aplicar un fondo.
+    SoundEffect {
+        id: tabSound
+        source: Qt.resolvedUrl("../../../assets/chime.wav")
+        volume: 0.18
+    }
+
+    SoundEffect {
+        id: applySound
+        source: Qt.resolvedUrl("../../../assets/chime.wav")
+        volume: 0.4
     }
 
     // Lista las imágenes del directorio, excluyendo los symlinks que el propio
@@ -137,7 +157,9 @@ Item {
         Text {
             Layout.fillWidth: true
 
-            text: "Wallpapers"
+            // Nombrar la pantalla evita la duda de dónde va a aplicarse, ya
+            // que el mismo panel existe en cada monitor.
+            text: "Wallpapers · " + grid.monitor
             color: Qt.alpha(Colors.foreground, 0.5)
             font.family: "JetBrains Mono Nerd Font"
             font.pixelSize: 9
@@ -185,7 +207,12 @@ Item {
                 implicitHeight: 20
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: grid.kind = modelData.id
+                onClicked: {
+                    if (grid.kind !== modelData.id) {
+                        grid.kind = modelData.id;
+                        tabSound.play();
+                    }
+                }
 
                 Rectangle {
                     anchors.fill: parent
