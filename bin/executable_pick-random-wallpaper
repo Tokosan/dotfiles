@@ -1,0 +1,15 @@
+#!/bin/bash
+# Invokes awww with a random file from /home/tokosan/media/images/wallpapers/
+set -euo pipefail
+
+dir="/home/tokosan/media/images/wallpapers"
+
+file="$(find "$dir" -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) | shuf -n1)"
+
+if [[ -z "$file" ]]; then
+    echo "No hay imágenes en $dir" >&2
+    exit 1
+fi
+
+echo "$file"
+awww img "$file" --transition-type=center --transition-fps=165

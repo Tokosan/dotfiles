@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+# Importa los wallpapers de tipo vídeo de Wallpaper Engine a ~/media/videos/wallpapers
+#
+#   wallpaper-import-we <ruta-al-workshop/431960> [--dry-run]
+#
+# Los wallpapers de tipo "scene" o "web" no son vídeo y se omiten: para esos
+# haría falta linux-wallpaperengine, que los renderiza en vez de reproducirlos.
+set -euo pipefail
+
+origen="${1:?Uso: wallpaper-import-we <ruta a .../workshop/content/431960> [--dry-run]}"
+dry_run="${2:-}"
+destino="$HOME/media/videos/wallpapers"
+
+[[ -d "$origen" ]] || { printf 'No existe: %s\n' "$origen" >&2; exit 1; }
+mkdir -p "$destino"
+
+importados=0 omitidos=0
+
+for dir in "$origen"/*/; do
+    [[ -d "$dir" ]] || continue
+
+    id="$(basename "$dir")"
+    json="$dir/project.json"
+
+    # El título legible está en project.json; si falta, nos quedamos con el id.
+    titulo="$id"
+    if [[ -f "$json" ]]; then
+        titulo="$(python3 -c "
+import json,sys,re
+try:
+    t = json.load(open('$json')).get('title', '$id')
+except Exception:
+    t = '$id'
+print(re.sub(r'[^\w\s-]', '', t).strip().replace(' ', '-')[:60] or '$id')
+" 2>/dev/null || echo "$id")"
+    fi
+
+    video="$(find "$dir" -maxdepth 2 -type f \( -iname '*.mp4' -o -iname '*.webm' \) | head -1)"
+
+    if [[ -z "$video" ]]; then
+        tipo="desconocido"
+        [[ -f "$dir/scene.pkg" || -f "$dir/scene.json" ]] && tipo="scene"
+        [[ -f "$dir/index.html" ]] && tipo="web"
+        printf '  omitido (%s): %s\n' "$tipo" "$titulo"
+        omitidos=$((omitidos + 1))
+        continue
+    fi
+
+    salida="$destino/${titulo}.mp4"
+
+    if [[ -n "$dry_run" ]]; then
+        printf '  [dry-run] %s -> %s\n' "$titulo" "$(basename "$salida")"
+    else
+        printf '  importando: %s\n' "$titulo"
+        wallpaper-optimize "$video" "$salida" >/dev/null 2>&1 \
+            || { printf '    falló la conversión, copio sin optimizar\n'; cp "$video" "$salida"; }
+    fi
+    importados=$((importados + 1))
+done
+
+printf '\n%d de tipo vídeo, %d omitidos (scene/web).\n' "$importados" "$omitidos"
+if [[ -n "$dry_run" ]]; then
+    printf 'Era una simulación: repite sin --dry-run para importarlos.\n'
+fi

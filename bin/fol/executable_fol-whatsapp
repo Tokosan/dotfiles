@@ -1,0 +1,4 @@
+#!/bin/sh
+focus-or-launch "chrome-web.whatsapp.com__-Default" \
+    "" \
+    "chromium --app=https://web.whatsapp.com"

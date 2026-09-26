@@ -1,0 +1,4 @@
+#!/bin/sh
+focus-or-launch "firefox" \
+    "" \
+    "firefox -P default-release"

@@ -1,0 +1,94 @@
+#!/bin/bash
+# Pregenera las miniaturas de los fondos animados (vídeos y scenes de Wallpaper
+# Engine) para que el picker de quickshell abra sin esperas.
+#
+# La miniatura no es sólo para la grilla: pywal y el lockscreen necesitan una
+# imagen fija de la que sacar los colores, y un vídeo o una scene no la tienen.
+# Esta es esa imagen.
+#
+# Uso: pregenerate-thumbs [--force]
+#   --force: rehace también las que ya existen.
+
+set -uo pipefail
+
+VIDEO_DIR=~/media/videos/wallpapers
+WORKSHOP=~/.local/share/Steam/steamapps/workshop/content/431960
+CACHE_DIR=~/.cache/wallpaper-thumbs
+FORCE=0
+
+[ "${1:-}" = "--force" ] && FORCE=1
+
+mkdir -p "$CACHE_DIR/video" "$CACHE_DIR/scene"
+
+built=0
+skipped=0
+failed=0
+
+# ── Vídeos: un fotograma del 25% de la duración ──────────────────────
+# El primer fotograma suele ser negro o un fundido de entrada.
+for video in "$VIDEO_DIR"/*.mp4 "$VIDEO_DIR"/*.webm; do
+  [ -f "$video" ] || continue
+
+  base=$(basename "${video%.*}")
+  out="$CACHE_DIR/video/${base}.jpg"
+
+  if [ -f "$out" ] && [ "$FORCE" -eq 0 ]; then
+    skipped=$((skipped + 1))
+    continue
+  fi
+
+  duration=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$video" 2>/dev/null)
+  seek=$(awk -v d="${duration:-4}" 'BEGIN { s = d * 0.25; print (s > 0.1 ? s : 0.1) }')
+
+  if ffmpeg -hide_banner -loglevel error -ss "$seek" -i "$video" \
+      -frames:v 1 -vf "scale=640:-2" -q:v 3 -y "$out" 2>/dev/null; then
+    built=$((built + 1))
+  else
+    echo "  falló: $base"
+    failed=$((failed + 1))
+  fi
+done
+
+# ── Scenes: el preview.jpg que ya trae Wallpaper Engine ──────────────
+for dir in "$WORKSHOP"/*/; do
+  [ -d "$dir" ] || continue
+
+  id=$(basename "$dir")
+  json="$dir/project.json"
+  [ -f "$json" ] || continue
+
+  tipo=$(python3 -c "
+import json, sys
+try: print(json.load(open(sys.argv[1])).get('type', '').lower())
+except Exception: print('')
+" "$json" 2>/dev/null)
+
+  [ "$tipo" = "scene" ] || continue
+
+  out="$CACHE_DIR/scene/${id}.jpg"
+
+  if [ -f "$out" ] && [ "$FORCE" -eq 0 ]; then
+    skipped=$((skipped + 1))
+    continue
+  fi
+
+  # El preview puede venir como jpg, png o gif según quién lo subiera.
+  preview=$(find "$dir" -maxdepth 1 -iname 'preview.*' | head -1)
+
+  if [ -z "$preview" ]; then
+    echo "  sin preview: $id"
+    failed=$((failed + 1))
+    continue
+  fi
+
+  # [0] toma el primer fotograma si el preview es un gif animado.
+  if magick "${preview}[0]" -resize 640x -quality 88 "$out" 2>/dev/null; then
+    built=$((built + 1))
+  else
+    echo "  falló: $id"
+    failed=$((failed + 1))
+  fi
+done
+
+printf '\nMiniaturas: %d nuevas, %d ya estaban, %d fallaron\n' "$built" "$skipped" "$failed"
+printf 'Cache: %s\n' "$CACHE_DIR"

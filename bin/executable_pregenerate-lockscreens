@@ -1,0 +1,73 @@
+#!/bin/bash
+# Pregenera las imágenes de lockscreen (con blur en dos tercios) para todos los
+# wallpapers, para que cambiar de fondo no tenga que componerlas al vuelo.
+#
+# Uso: pregenerate-lockscreens [--force]
+#   --force: rehace también las que ya existen.
+
+set -uo pipefail
+
+WALLPAPER_DIR=~/media/images/wallpapers/unsorted
+CACHE_DIR=~/.cache/lockscreens
+FORCE=0
+
+[ "${1:-}" = "--force" ] && FORCE=1
+
+mkdir -p "$CACHE_DIR"
+
+# Un mask por cada resolución distinta, no uno por imagen.
+declare -A MASK_CACHE
+
+function mask_for() {
+  local w=$1 h=$2
+  local key="${w}x${h}"
+  local mask="$CACHE_DIR/.mask-${key}.png"
+
+  if [ -z "${MASK_CACHE[$key]:-}" ]; then
+    if [ ! -f "$mask" ]; then
+      local third=$((w / 3))
+      magick -size "${key}" xc:black -fill white -draw "rectangle 0,0 ${third},${h}" "$mask"
+    fi
+    MASK_CACHE[$key]="$mask"
+  fi
+
+  echo "$mask"
+}
+
+total=0
+built=0
+skipped=0
+failed=0
+
+while IFS= read -r img; do
+  total=$((total + 1))
+  base=$(basename "$img")
+  out="$CACHE_DIR/$base"
+
+  # Se rehace solo si falta o si el wallpaper es más nuevo que su lockscreen.
+  if [ "$FORCE" -eq 0 ] && [ -f "$out" ] && [ "$out" -nt "$img" ]; then
+    skipped=$((skipped + 1))
+    continue
+  fi
+
+  read -r w h < <(identify -format "%w %h" "$img" 2>/dev/null)
+  if [ -z "${w:-}" ]; then
+    echo "  ERROR  $base (no se pudo leer)"
+    failed=$((failed + 1))
+    continue
+  fi
+
+  mask=$(mask_for "$w" "$h")
+
+  if magick "$img" \( +clone -blur 0x20 \) "$mask" -composite "$out" 2>/dev/null; then
+    built=$((built + 1))
+    printf "  ok     %s\n" "$base"
+  else
+    failed=$((failed + 1))
+    echo "  ERROR  $base"
+  fi
+done < <(find "$WALLPAPER_DIR" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) | sort)
+
+echo
+echo "total=$total  generadas=$built  ya estaban=$skipped  fallidas=$failed"
+echo "cache: $CACHE_DIR"

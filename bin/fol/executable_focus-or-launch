@@ -1,0 +1,67 @@
+#!/bin/bash
+
+# Si HYPRLAND_INSTANCE_SIGNATURE apunta a una instancia muerta (p. ej. la shell
+# se heredó de una sesión anterior del compositor), buscar la instancia viva:
+# la que tiene hyprland.lock es la única activa.
+if ! hyprctl version &>/dev/null; then
+    for d in "${XDG_RUNTIME_DIR:-/run/user/$UID}"/hypr/*/; do
+        [[ -e "$d/hyprland.lock" ]] || continue
+        export HYPRLAND_INSTANCE_SIGNATURE=$(basename "$d")
+        break
+    done
+    if ! hyprctl version &>/dev/null; then
+        echo -e "\e[31m[ERROR]\e[0m No se encontró una instancia activa de Hyprland." >&2
+        exit 1
+    fi
+fi
+
+focus_or_launch() {
+    local TARGET_CLASS="$1"
+    local TARGET_TITLE="$2"
+    local CMD="$3"
+
+    # 0. Get all matching window addresses in a predictable order
+    local MATCHES=$(hyprctl clients -j | jq -r \
+        --arg cls "$TARGET_CLASS" \
+        --arg ttl "$TARGET_TITLE" \
+        'map(select(
+            ($cls == "" or .class == $cls) and 
+            ($ttl == "" or (.title | test($ttl; "i")))
+        )) | sort_by(.address) | .[].address')
+
+    # Convert newline-separated string to an array
+    readarray -t ADDR_ARRAY <<< "$MATCHES"
+    local COUNT=${#ADDR_ARRAY[@]}
+
+    # 1. If no windows found, launch the app
+    if [[ $COUNT -eq 0 || -z "${ADDR_ARRAY[0]}" ]]; then
+        echo -e "\e[33m[LAUNCH]\e[0m No match. Executing: $CMD"
+        (setsid $CMD >/dev/null 2>&1 &)
+        return
+    fi
+
+    # 2. Get the currently active window address
+    local ACTIVE_ADDR=$(hyprctl activewindow -j | jq -r '.address')
+
+    # 3. Cycling Logic
+    local NEXT_ADDR="${ADDR_ARRAY[0]}" # Default to first if active isn't in list
+
+    for i in "${!ADDR_ARRAY[@]}"; do
+        if [[ "${ADDR_ARRAY[$i]}" == "$ACTIVE_ADDR" ]]; then
+            # We found the active window, pick the next one (looping to 0 if at end)
+            local NEXT_INDEX=$(( (i + 1) % COUNT ))
+            NEXT_ADDR="${ADDR_ARRAY[$NEXT_INDEX]}"
+            break
+        fi
+    done
+
+    echo -e "\e[32m[CYCLE]\e[0m Focusing $NEXT_ADDR ($((NEXT_INDEX+1))/$COUNT)"
+    # Hyprland >=0.55 usa dispatchers Lua; el antiguo `focuswindow address:...` ya no parsea
+    hyprctl dispatch "hl.dsp.focus({ window = 'address:$NEXT_ADDR' })"
+}
+
+T_CLASS=$1
+T_TITLE=$2
+T_CMD=$3
+
+focus_or_launch "$T_CLASS" "$T_TITLE" "$T_CMD"

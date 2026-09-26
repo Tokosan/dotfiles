@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+# Controla el fondo de pantalla animado (mpvpaper) del monitor DP-1.
+#
+#   wallpaper-video start [archivo]  Lanza el fondo (aleatorio si no se indica archivo)
+#   wallpaper-video stop             Lo detiene y restaura el fondo estático de awww
+#   wallpaper-video toggle           Alterna entre animado y estático
+#   wallpaper-video next             Salta a otro vídeo al azar
+set -euo pipefail
+
+MONITOR="DP-1"
+DIR="$HOME/media/videos/wallpapers"
+SOCKET="/tmp/mpvpaper-${MONITOR}.sock"
+
+random_video() {
+    find "$DIR" -type f \( -iname '*.mp4' -o -iname '*.webm' -o -iname '*.mkv' \) \
+        | shuf -n1
+}
+
+# -x limita la búsqueda al ejecutable, para no encontrarnos a nosotros mismos
+# ni al shell que nos invoca: sus líneas de comando también contienen "mpvpaper".
+# Alcanza a todas las instancias, no sólo a la de $MONITOR: basta mientras haya
+# un único fondo animado. Con uno por monitor habría que filtrar por su socket.
+pids() {
+    pgrep -x mpvpaper 2>/dev/null || true
+}
+
+running() {
+    [[ -n "$(pids)" ]]
+}
+
+start() {
+    local video="${1:-$(random_video)}"
+
+    if [[ -z "$video" ]]; then
+        printf 'No hay vídeos en %s\n' "$DIR" >&2
+        printf 'Descarga alguno de moewalls.com y pásalo por wallpaper-optimize.\n' >&2
+        exit 1
+    fi
+
+    stop_quiet
+    # Un solo fondo animado a la vez: si hay una scene puesta, la quitamos.
+    pkill -f 'linux-wallpaperengine --screen-root' 2>/dev/null || true
+
+    # panscan=1 recorta en lugar de dejar bandas cuando la relación de aspecto no cuadra.
+    # setsid lo desacopla de este shell: si no, al salir el script el proceso
+    # queda huérfano y recibe SIGHUP.
+    setsid -f mpvpaper -o "no-audio loop hwdec=auto panscan=1.0 video-sync=display-resample \
+input-ipc-server=${SOCKET}" \
+        -f "$MONITOR" "$video"
+
+    printf 'Fondo animado en %s: %s\n' "$MONITOR" "$(basename "$video")"
+}
+
+stop_quiet() {
+    local p
+    p="$(pids)"
+    if [[ -n "$p" ]]; then
+        kill $p 2>/dev/null || true
+        # Esperamos a que muera: kill sólo pide la terminación, y si seguimos
+        # de inmediato la siguiente comprobación aún lo ve vivo.
+        for _ in $(seq 20); do
+            [[ -z "$(pids)" ]] && break
+            sleep 0.1
+        done
+        [[ -n "$(pids)" ]] && kill -9 $(pids) 2>/dev/null || true
+    fi
+    rm -f "$SOCKET"
+}
+
+stop() {
+    stop_quiet
+    # Devuelve el monitor al fondo estático que tenía awww.
+    awww restore 2>/dev/null || true
+    printf 'Fondo animado detenido en %s\n' "$MONITOR"
+}
+
+case "${1:-toggle}" in
+    start) shift; start "${1:-}" ;;
+    stop)  stop ;;
+    next)  start ;;
+    toggle)
+        if running; then stop; else start; fi
+        ;;
+    *)
+        printf 'Uso: %s {start|stop|toggle|next} [archivo]\n' "${0##*/}" >&2
+        exit 1
+        ;;
+esac

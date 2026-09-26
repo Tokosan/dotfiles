@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Optimiza un vídeo para usarlo como fondo con mpvpaper.
+# Uso: wallpaper-optimize entrada.mp4 [salida.mp4]
+set -euo pipefail
+
+entrada="${1:?Uso: wallpaper-optimize entrada.mp4 [salida.mp4]}"
+salida="${2:-$HOME/media/videos/wallpapers/$(basename "${entrada%.*}").mp4}"
+
+mkdir -p "$(dirname "$salida")"
+
+# 1080p máximo, sin audio, CRF 26 (buen equilibrio para fondo), faststart.
+ffmpeg -hide_banner -loglevel warning -stats -i "$entrada" \
+    -vf "scale='min(1920,iw)':-2:flags=lanczos" \
+    -c:v libx264 -preset slow -crf 26 -pix_fmt yuv420p \
+    -an -movflags +faststart \
+    -y "$salida"
+
+printf '\n%s\n' "Listo: $salida"
+du -h "$entrada" "$salida" | sed 's/^/  /'

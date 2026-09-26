@@ -1,0 +1,106 @@
+#!/usr/bin/env bash
+# Controla fondos de tipo "scene" de Wallpaper Engine en el monitor DP-1.
+#
+#   wallpaper-scene start [id]  Lanza una scene (aleatoria si no se indica id)
+#   wallpaper-scene stop        La detiene y restaura el fondo estático
+#   wallpaper-scene toggle      Alterna entre scene y estático
+#   wallpaper-scene next        Salta a otra scene al azar
+#   wallpaper-scene list        Lista las scenes disponibles con su título
+set -euo pipefail
+
+MONITOR="DP-1"
+WORKSHOP="$HOME/.local/share/Steam/steamapps/workshop/content/431960"
+ASSETS="$HOME/.local/share/Steam/steamapps/common/wallpaper_engine/assets"
+FPS=30
+
+# El nombre del ejecutable supera los 15 caracteres que admite `pgrep -x`, así
+# que buscamos por línea de comando. El wrapper de /usr/bin hace `cd /opt` y lo
+# arranca como «./linux-wallpaperengine», de modo que una ruta absoluta sólo
+# encontraría el wrapper y dejaría vivo el proceso que de verdad pinta.
+PATRON='linux-wallpaperengine --screen-root'
+
+pids() {
+    pgrep -f "$PATRON" 2>/dev/null || true
+}
+
+running() {
+    [[ -n "$(pids)" ]]
+}
+
+# Imprime "<id>\t<título>" por cada wallpaper de tipo scene.
+scenes() {
+    local d j
+    for d in "$WORKSHOP"/*/; do
+        j="$d/project.json"
+        [[ -f "$j" ]] || continue
+        python3 -c "
+import json, sys
+try:
+    data = json.load(open(sys.argv[1]))
+except Exception:
+    sys.exit()
+if data.get('type', '').lower() == 'scene':
+    print(sys.argv[2] + '\t' + str(data.get('title', sys.argv[2])))
+" "$j" "$(basename "$d")" 2>/dev/null
+    done
+}
+
+stop_quiet() {
+    local p
+    p="$(pids)"
+    if [[ -n "$p" ]]; then
+        kill $p 2>/dev/null || true
+        for _ in $(seq 20); do
+            [[ -z "$(pids)" ]] && break
+            sleep 0.1
+        done
+        [[ -n "$(pids)" ]] && kill -9 $(pids) 2>/dev/null || true
+    fi
+}
+
+start() {
+    local id="${1:-}"
+
+    if [[ -z "$id" ]]; then
+        id="$(scenes | shuf -n1 | cut -f1)"
+    fi
+
+    if [[ -z "$id" || ! -d "$WORKSHOP/$id" ]]; then
+        printf 'No encuentro la scene %s en %s\n' "${id:-(ninguna)}" "$WORKSHOP" >&2
+        exit 1
+    fi
+
+    # Un fondo animado no debería competir con un juego a pantalla completa:
+    # linux-wallpaperengine se pausa solo, a diferencia de mpvpaper.
+    stop_quiet
+    pkill -x mpvpaper 2>/dev/null || true
+
+    # setsid lo desacopla de este shell: si no, al salir el script el proceso
+    # queda huérfano y recibe SIGHUP.
+    setsid -f linux-wallpaperengine \
+        --screen-root "$MONITOR" --bg "$id" \
+        --fps "$FPS" --silent --assets-dir "$ASSETS" \
+        >/dev/null 2>&1
+
+    printf 'Scene en %s: %s\n' "$MONITOR" "$(scenes | grep "^${id}	" | cut -f2 || echo "$id")"
+}
+
+stop() {
+    stop_quiet
+    awww restore 2>/dev/null || true
+    printf 'Scene detenida en %s\n' "$MONITOR"
+}
+
+case "${1:-toggle}" in
+    start) shift; start "${1:-}" ;;
+    stop)  stop ;;
+    next)  start ;;
+    list)  scenes | sort -t$'\t' -k2 | column -t -s$'\t' ;;
+    toggle)
+        if running; then stop; else start; fi
+        ;;
+    *)
+        printf 'Uso: %s {start|stop|toggle|next|list} [id]\n' "${0##*/}" >&2
+        exit 1
+        ;;
+esac

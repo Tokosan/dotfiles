@@ -1,0 +1,4 @@
+#!/bin/sh
+focus-or-launch "chrome-web.slack.com__-Default" \
+    "" \
+    "chromium --app=https://slack.com"

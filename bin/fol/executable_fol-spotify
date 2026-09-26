@@ -1,0 +1,4 @@
+#!/bin/sh
+focus-or-launch "chrome-spotify.com__-Default" \
+    "" \
+    "chromium --app=https://spotify.com"

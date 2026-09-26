@@ -93,3 +93,7 @@ hl.bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd("hyprshot -m region --output-
 hl.bind(mainMod .. " + CONTROL + SPACE", hl.dsp.exec_cmd("pick-random-wallpaper"), { desc = "Change wallpaper" })
 hl.bind(mainMod .. " + R", hl.dsp.exec_cmd('gpu-screen-recorder -w DP-1 -f 30 -a default_output -o ~/drives/hdd/media/videos/screenrecord/$(date +%Y-%m-%d_%H-%M-%S).mp4 & notify-send "Recording Started"'), { desc = "Start recording" })
 hl.bind(mainMod .. " + CONTROL + R", hl.dsp.exec_cmd('killall -SIGINT gpu-screen-recorder && notify-send "Recording Stopped"'), { desc = "Stop recording" })
+hl.bind(mainMod .. " + CONTROL + V", hl.dsp.exec_cmd("wallpaper-video toggle"), { desc = "Toggle animated wallpaper" })
+hl.bind(mainMod .. " + CONTROL + SHIFT + V", hl.dsp.exec_cmd("wallpaper-video next"), { desc = "Next animated wallpaper" })
+hl.bind(mainMod .. " + CONTROL + B", hl.dsp.exec_cmd("wallpaper-scene toggle"), { desc = "Toggle Wallpaper Engine scene" })
+hl.bind(mainMod .. " + CONTROL + SHIFT + B", hl.dsp.exec_cmd("wallpaper-scene next"), { desc = "Next Wallpaper Engine scene" })

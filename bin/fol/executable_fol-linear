@@ -1,0 +1,4 @@
+#!/bin/sh
+focus-or-launch "chrome-web.linear.com__-Default" \
+    "" \
+    "chromium --app=https://linear.app"
