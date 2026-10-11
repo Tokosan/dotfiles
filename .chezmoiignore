@@ -4,3 +4,4 @@
 .config/rofi
 .config/swaync
 {{- end }}
+.config/quickshell/CLAUDE.md
