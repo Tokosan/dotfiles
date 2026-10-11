@@ -23,16 +23,20 @@ for dir in "$origen"/*/; do
     json="$dir/project.json"
 
     # El título legible está en project.json; si falta, nos quedamos con el id.
+    # La ruta y el id van como argumentos y no pegados en el código Python:
+    # una comilla en el nombre de la carpeta rompería el script (o inyectaría
+    # código).
     titulo="$id"
     if [[ -f "$json" ]]; then
-        titulo="$(python3 -c "
-import json,sys,re
+        titulo="$(python3 -c '
+import json, re, sys
+path, fallback = sys.argv[1], sys.argv[2]
 try:
-    t = json.load(open('$json')).get('title', '$id')
+    t = str(json.load(open(path)).get("title", fallback))
 except Exception:
-    t = '$id'
-print(re.sub(r'[^\w\s-]', '', t).strip().replace(' ', '-')[:60] or '$id')
-" 2>/dev/null || echo "$id")"
+    t = fallback
+print(re.sub(r"[^\w\s-]", "", t).strip().replace(" ", "-")[:60] or fallback)
+' "$json" "$id" 2>/dev/null || echo "$id")"
     fi
 
     video="$(find "$dir" -maxdepth 2 -type f \( -iname '*.mp4' -o -iname '*.webm' \) | head -1)"
