@@ -46,6 +46,14 @@ MouseArea {
             cell.dragFinished();
     }
 
+    // El arrastre también puede terminar sin release (el compositor le quita
+    // el puntero a la ventana). Sin esto la grilla quedaría en modo arrastre
+    // para siempre: sin scroll y sin recoger cambios de favoritos.
+    onCanceled: {
+        if (cell.moved)
+            cell.dragFinished();
+    }
+
     onClicked: mouse => {
         if (cell.moved)
             return;
