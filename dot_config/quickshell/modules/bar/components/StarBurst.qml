@@ -10,8 +10,21 @@ ParticleSystem {
 
     property color tint: Colors.accent
 
+    // Apagado en reposo: un ParticleSystem corriendo sin partículas igual
+    // cuesta ciclos, y este cubre todo el panel. Se enciende al disparar y se
+    // apaga cuando muere la última estrellita.
+    running: false
+
     function fire(count) {
+        system.running = true;
         emitter.burst(count);
+        stopTimer.restart();
+    }
+
+    Timer {
+        id: stopTimer
+        interval: emitter.lifeSpan + emitter.lifeSpanVariation + 100
+        onTriggered: system.running = false
     }
 
     ImageParticle {
@@ -56,7 +69,7 @@ ParticleSystem {
         }
     }
 
-    // Permite posicionar el emisor donde esté el botón.
+    // Centra el emisor en (x, y), en coordenadas del sistema.
     function moveTo(x, y) {
         emitter.x = x - emitter.width / 2;
         emitter.y = y - emitter.height / 2;

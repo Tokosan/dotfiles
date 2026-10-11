@@ -1,45 +1,29 @@
-import Quickshell
 import QtQuick
-import QtQuick.Particles
-import QtMultimedia
 
 import "../../config"
+import "../../common"
+import "../../services"
 
-Rectangle {
+// Botón de la esquina. Solo expone señales: TopBar decide qué hace cada
+// click (izquierdo abre el launcher, derecho el menú).
+BarPill {
     id: starButton
 
-    // Acciones que expone: el consumidor decide qué hacen.
     signal primaryAction
     signal secondaryAction
-
-    property real barHeight: 34
-    property real bottomRadius: 15
-
-    implicitWidth: 42
-    implicitHeight: barHeight
-
-    color: Colors.barBackground
-    // Ocupa la esquina entera, como en waybar: solo se curva hacia adentro,
-    // por eso la inferior izquierda va pegada al canto.
-    topLeftRadius: 0
-    topRightRadius: 0
-    bottomLeftRadius: 0
-    bottomRightRadius: bottomRadius
-
-    // La ráfaga la dispara quien nos contiene: las partículas tienen que
+    // La ráfaga de estrellitas la dibuja TopBar: las partículas tienen que
     // poder salir del botón sin recortarse.
     signal sparkle
 
+    implicitWidth: 42
+    // Ocupa la esquina entera, como en waybar: solo se curva hacia adentro,
+    // por eso la inferior izquierda va pegada al canto.
+    bottomLeftRadius: 0
+
     function celebrate() {
-        chime.play();
+        Sounds.play("normal");
         starButton.sparkle();
         pulse.restart();
-    }
-
-    SoundEffect {
-        id: chime
-        source: Qt.resolvedUrl("../../../assets/chime.wav")
-        volume: 0.35
     }
 
     MouseArea {
@@ -58,42 +42,36 @@ Rectangle {
             else
                 starButton.primaryAction();
         }
+    }
 
-        Text {
-            id: starGlyph
-            anchors.centerIn: parent
+    BarText {
+        id: starGlyph
+        anchors.centerIn: parent
 
-            // nf-fa-star
-            text: "\u{f005}"
-            color: area.containsMouse ? Colors.accent : Colors.foreground
-            font.family: "JetBrains Mono Nerd Font"
-            font.pixelSize: 15
+        // nf-fa-star
+        text: "\u{f005}"
+        color: area.containsMouse ? Colors.accent : Colors.text
+        font.pixelSize: Theme.fontXl
+        font.bold: false
 
-            Behavior on color {
-                ColorAnimation {
-                    duration: 120
-                }
+        // Rebote al hacer click.
+        SequentialAnimation {
+            id: pulse
+
+            NumberAnimation {
+                target: starGlyph
+                property: "scale"
+                to: 1.35
+                duration: 90
+                easing.type: Easing.OutQuad
             }
 
-            // Rebote al hacer click.
-            SequentialAnimation {
-                id: pulse
-
-                NumberAnimation {
-                    target: starGlyph
-                    property: "scale"
-                    to: 1.35
-                    duration: 90
-                    easing.type: Easing.OutQuad
-                }
-
-                NumberAnimation {
-                    target: starGlyph
-                    property: "scale"
-                    to: 1
-                    duration: 260
-                    easing.type: Easing.OutBack
-                }
+            NumberAnimation {
+                target: starGlyph
+                property: "scale"
+                to: 1
+                duration: 260
+                easing.type: Easing.OutBack
             }
         }
     }

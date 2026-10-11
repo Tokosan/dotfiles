@@ -18,7 +18,7 @@ Item {
 
     property real pillHeight: 30
     // Cuánto tarda el porcentaje en aparecer o desvanecerse.
-    property real fadeDuration: 120
+    property real fadeDuration: Theme.animFast
 
     implicitWidth: pill.implicitWidth
     implicitHeight: pillHeight + extraHeight
@@ -48,8 +48,8 @@ Item {
             SequentialAnimation {
                 NumberAnimation {
                     property: "extraHeight"
-                    duration: 200
-                    easing.type: Easing.OutCubic
+                    duration: Theme.animSlow
+                    easing.type: Theme.easing
                 }
 
                 NumberAnimation {
@@ -69,8 +69,8 @@ Item {
 
                 NumberAnimation {
                     property: "extraHeight"
-                    duration: 200
-                    easing.type: Easing.OutCubic
+                    duration: Theme.animSlow
+                    easing.type: Theme.easing
                 }
             }
         }
@@ -95,45 +95,45 @@ Item {
         gradient: Gradient {
             GradientStop {
                 position: 0
-                color: Qt.alpha(Colors.foreground, 0.12)
+                color: Colors.surfaceRaised
             }
             GradientStop {
                 position: Math.max(0, 1 - pill.fillRatio - 0.001)
-                color: Qt.alpha(Colors.foreground, 0.12)
+                color: Colors.surfaceRaised
             }
             GradientStop {
                 position: Math.max(0, 1 - pill.fillRatio)
-                color: stat.showPercent ? Qt.alpha(Colors.foreground, 0.12) : Colors.loadColor(stat.value)
+                color: stat.showPercent ? Colors.surfaceRaised : Colors.loadColor(stat.value)
             }
             GradientStop {
                 position: 1
-                color: stat.showPercent ? Qt.alpha(Colors.foreground, 0.12) : Colors.loadColor(stat.value)
+                color: stat.showPercent ? Colors.surfaceRaised : Colors.loadColor(stat.value)
             }
         }
 
         Behavior on fillRatio {
             NumberAnimation {
                 duration: 400
-                easing.type: Easing.OutCubic
+                easing.type: Theme.easing
             }
         }
 
         Behavior on implicitWidth {
             NumberAnimation {
-                duration: 150
-                easing.type: Easing.OutCubic
+                duration: Theme.animNormal
+                easing.type: Theme.easing
             }
         }
 
         Text {
-            id: text
+            id: pillText
             anchors.centerIn: parent
 
             text: stat.showPercent ? stat.value + "%" : stat.label
             // Sobre el relleno claro el texto se oscurece, como en waybar.
-            color: !stat.showPercent && stat.value >= 50 ? Colors.loadTextOnFill : Colors.foreground
-            font.family: "JetBrains Mono Nerd Font"
-            font.pixelSize: 11
+            color: stat.showPercent ? Colors.text : Colors.loadTextColor(stat.value)
+            font.family: Theme.fontFamily
+            font.pixelSize: Theme.fontBody
             font.bold: true
         }
     }
@@ -164,9 +164,9 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
 
                 text: stat.value + "%"
-                color: Colors.foreground
-                font.family: "JetBrains Mono Nerd Font"
-                font.pixelSize: 12
+                color: Colors.text
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontMd
                 font.bold: true
             }
 
@@ -175,22 +175,24 @@ Item {
 
                 visible: stat.detail.length > 0
                 text: stat.detail
-                color: Qt.alpha(Colors.foreground, 0.65)
-                font.family: "JetBrains Mono Nerd Font"
-                font.pixelSize: 10
+                color: Colors.textSecondary
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSm
             }
         }
     }
 
+    // Ancho fijo por modo, para que la pill no cambie de tamaño con cada
+    // lectura.
     TextMetrics {
         id: labelMetrics
-        font: text.font
-        text: "CPU"
+        font: pillText.font
+        text: stat.label
     }
 
     TextMetrics {
         id: pctMetrics
-        font: text.font
+        font: pillText.font
         text: "100%"
     }
 }

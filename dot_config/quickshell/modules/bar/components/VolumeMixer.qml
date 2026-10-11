@@ -1,126 +1,74 @@
+pragma ComponentBehavior: Bound
+
 import Quickshell
 import Quickshell.Services.Pipewire
 import QtQuick
-import QtQuick.Effects
 import QtQuick.Layouts
 
 import "../../config"
+import "../../common"
+import "../../services"
 
-Rectangle {
+// Desplegable del volumen: elegir salida y volumen por aplicación. Lo abre y
+// cierra TopBar con `open` (heredado de Panel).
+Panel {
     id: mixer
 
-    required property PwNode sink
-    required property PwNode source
-
-    property real padding: 12
-    property real radiusValue: 15
+    // Tope de la lista de apps: más allá hace scroll en vez de crecer y
+    // cortarse contra el borde del panel de la barra (expandRoom).
+    readonly property real maxStreamsHeight: 260
 
     implicitWidth: 300
-    implicitHeight: content.implicitHeight + padding * 2
-
-    // Más opaco que la barra: flota sobre el wallpaper y tiene que leerse.
-    color: Colors.panelBackground
-    radius: radiusValue
-
-    border.width: 2
-    border.color: Colors.panelBorder
-
-    // La sombra necesita que el panel se renderice en su propia capa.
-    layer.enabled: true
-    layer.effect: MultiEffect {
-        shadowEnabled: true
-        shadowColor: Colors.panelShadow
-        shadowBlur: 0.7
-        shadowVerticalOffset: 4
-        shadowOpacity: 0.55
-    }
-
-    // Todos los nodos deben estar registrados o no reportan volumen.
-    PwObjectTracker {
-        objects: Pipewire.nodes.values
-    }
-
-    // Dispositivos de salida disponibles.
-    readonly property var sinks: Pipewire.nodes.values.filter(n => n.isSink && !n.isStream && n.audio)
-    // Streams de aplicaciones que están sonando.
-    readonly property var streams: Pipewire.nodes.values.filter(n => n.isSink && n.isStream && n.audio)
-
-    // Alias para acortar los nombres que reporta pipewire, que son largos y
-    // poco legibles. Solo afectan a esta barra: el resto del sistema sigue
-    // viendo el nombre original. Se buscan por node.name, que es estable.
-    readonly property var deviceAliases: [
-        {
-            match: "hdmi",
-            label: "Headphones"
-        },
-        {
-            match: "analog-stereo",
-            label: "Speakers"
-        }
-    ]
-
-    function nodeLabel(node) {
-        const name = (node?.name ?? "").toLowerCase();
-
-        for (const alias of mixer.deviceAliases) {
-            if (name.includes(alias.match))
-                return alias.label;
-        }
-
-        // Sin alias: el nick es más corto que la descripción completa.
-        return node?.nickname || node?.description || node?.name || "?";
-    }
-
-    function percentOf(node) {
-        return Math.round((node?.audio?.volume ?? 0) * 100);
-    }
+    implicitHeight: content.implicitHeight + Theme.panelPadding * 2
 
     ColumnLayout {
         id: content
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
-        anchors.margins: mixer.padding
+        anchors.margins: Theme.panelPadding
 
         spacing: 10
 
         // ── Dispositivos de salida ────────────────────────────────────
-        MixerHeader {
+        SectionHeader {
             Layout.fillWidth: true
             text: "Devices"
         }
 
+        // ScriptModel y no el array a secas: con un array, cada cambio en
+        // PipeWire recrearía todas las filas (y cortaría un arrastre).
         Repeater {
-            model: mixer.sinks
+            model: ScriptModel {
+                values: Audio.sinks
+            }
 
             delegate: MouseArea {
                 id: deviceRow
                 required property PwNode modelData
 
-                readonly property bool isActive: deviceRow.modelData?.id === mixer.sink?.id
+                readonly property bool isActive: deviceRow.modelData?.id === Audio.sink?.id
 
                 Layout.fillWidth: true
                 implicitHeight: 24
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                // El cambio de salida por defecto es asíncrono: la lista se
-                // actualiza sola cuando pipewire confirma.
-                onClicked: Pipewire.preferredDefaultAudioSink = deviceRow.modelData
+                onClicked: Audio.setDefaultSink(deviceRow.modelData)
 
                 RowLayout {
                     anchors.fill: parent
                     spacing: 7
 
                     Text {
-                        // Punto lleno si es el activo.
+                        // nf-md-circle_medium / circle_outline: lleno si es el activo.
                         text: deviceRow.isActive ? "\u{f0765}" : "\u{f0766}"
-                        color: deviceRow.isActive ? Colors.accent : Qt.alpha(Colors.foreground, 0.45)
-                        font.family: "JetBrains Mono Nerd Font"
-                        font.pixelSize: 11
+                        color: deviceRow.isActive ? Colors.accent : Colors.textMuted
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontBody
 
                         Behavior on color {
                             ColorAnimation {
-                                duration: 120
+                                duration: Theme.animFast
                             }
                         }
                     }
@@ -128,15 +76,15 @@ Rectangle {
                     Text {
                         Layout.fillWidth: true
 
-                        text: mixer.nodeLabel(deviceRow.modelData)
+                        text: Audio.nodeLabel(deviceRow.modelData)
                         elide: Text.ElideRight
-                        color: deviceRow.isActive ? Colors.foreground : deviceRow.containsMouse ? Colors.accent : Qt.alpha(Colors.foreground, 0.6)
-                        font.family: "JetBrains Mono Nerd Font"
-                        font.pixelSize: 11
+                        color: deviceRow.isActive ? Colors.text : deviceRow.containsMouse ? Colors.accent : Colors.textSecondary
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontBody
 
                         Behavior on color {
                             ColorAnimation {
-                                duration: 120
+                                duration: Theme.animFast
                             }
                         }
                     }
@@ -145,7 +93,7 @@ Rectangle {
         }
 
         // ── Volumen por aplicación ────────────────────────────────────
-        MixerHeader {
+        SectionHeader {
             Layout.fillWidth: true
             text: "Applications"
         }
@@ -153,23 +101,35 @@ Rectangle {
         Text {
             Layout.fillWidth: true
 
-            visible: mixer.streams.length === 0
+            visible: Audio.streams.length === 0
             text: "Nothing playing"
-            color: Qt.alpha(Colors.foreground, 0.45)
-            font.family: "JetBrains Mono Nerd Font"
-            font.pixelSize: 11
+            color: Colors.textMuted
+            font.family: Theme.fontFamily
+            font.pixelSize: Theme.fontBody
             font.italic: true
         }
 
-        Repeater {
-            model: mixer.streams
+        ListView {
+            id: streamList
+            Layout.fillWidth: true
+            Layout.preferredHeight: Math.min(streamList.contentHeight, mixer.maxStreamsHeight)
+
+            visible: Audio.streams.length > 0
+            clip: true
+            spacing: 10
+            boundsBehavior: Flickable.StopAtBounds
+
+            model: ScriptModel {
+                values: Audio.streams
+            }
 
             delegate: MixerRow {
                 required property PwNode modelData
 
-                Layout.fillWidth: true
+                width: streamList.width
+                // nf-md-application_outline
                 icon: "\u{f075a}"
-                label: mixer.nodeLabel(modelData)
+                label: Audio.nodeLabel(modelData)
                 node: modelData
             }
         }

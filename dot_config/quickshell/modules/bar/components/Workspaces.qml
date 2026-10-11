@@ -1,61 +1,28 @@
-import Quickshell
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Layouts
 import Quickshell.Hyprland
 
 import "../../config"
+import "../../common"
 
-Rectangle {
+// Grupo de workspaces (p. ej. 1-5). Se muestran siempre, aunque estén vacíos.
+//   click izquierdo: ir al workspace · click medio: mover ahí la ventana
+BarPill {
     id: workspaces
 
-    // IDs que forman este grupo. Se muestran siempre, aunque estén vacíos.
+    // IDs que forman este grupo (ver Settings.workspaceGroups).
     required property var workspaceIds
-    // Diámetro del círculo de un workspace vacío.
-    property real pillSize: 26
 
-    implicitWidth: layout.implicitWidth + 20
-    implicitHeight: layout.implicitHeight + 8
+    hPadding: 10
+    contentWidth: layout.implicitWidth
 
-    color: Colors.barBackground
-    topLeftRadius: 0
-    topRightRadius: 0
-    bottomLeftRadius: 15
-    bottomRightRadius: 15
-
-    // Une los IDs del grupo con el estado real de Hyprland, que solo reporta
-    // los workspaces ocupados.
-    readonly property var entries: {
-        const byId = ({});
-
-        for (const id of workspaces.workspaceIds) {
-            byId[id] = {
-                id: id,
-                name: String(id),
-                focused: false,
-                urgent: false,
-                occupied: false,
-                ws: null
-            };
-        }
-
-        for (const ws of Hyprland.workspaces.values) {
-            // Se compara por name porque un workspace descubierto vía toplevel
-            // llega con id = -1; el name en cambio siempre viene bien.
-            const wsId = parseInt(ws.name);
-            if (isNaN(wsId) || !workspaces.workspaceIds.includes(wsId))
-                continue;
-
-            byId[wsId] = {
-                id: wsId,
-                name: ws.name,
-                focused: ws.focused,
-                urgent: ws.urgent,
-                occupied: true,
-                ws: ws
-            };
-        }
-
-        return Object.values(byId).sort((a, b) => a.id - b.id);
+    // Workspace de Hyprland con ese número, o null si está vacío (Hyprland
+    // solo reporta los ocupados). Se compara por name porque uno descubierto
+    // vía toplevel llega con id = -1; el name en cambio siempre viene bien.
+    function findWorkspace(id) {
+        return Hyprland.workspaces.values.find(ws => parseInt(ws.name) === id) ?? null;
     }
 
     RowLayout {
@@ -63,12 +30,20 @@ Rectangle {
         anchors.centerIn: parent
         spacing: 8
 
+        // El modelo es la lista fija de ids, no el estado de Hyprland: así los
+        // delegates viven siempre y solo cambian sus propiedades. Con un
+        // array recalculado se recreaban en cada cambio de foco y las
+        // animaciones de color/ancho no llegaban a verse.
         Repeater {
-            model: workspaces.entries
+            model: workspaces.workspaceIds
 
             MouseArea {
                 id: entry
-                required property var modelData
+                required property int modelData
+
+                readonly property var ws: workspaces.findWorkspace(entry.modelData)
+                readonly property bool focused: entry.ws?.focused ?? false
+                readonly property bool occupied: entry.ws !== null
 
                 implicitWidth: pill.implicitWidth
                 implicitHeight: pill.implicitHeight
@@ -81,9 +56,9 @@ Rectangle {
                     if (mouse.button === Qt.MiddleButton)
                         // Igual que super+shift+n: lleva la ventana enfocada y
                         // el foco con ella.
-                        Hyprland.dispatch('hl.dsp.window.move({ workspace = ' + entry.modelData.id + ' })');
+                        Hyprland.dispatch(`hl.dsp.window.move({ workspace = ${entry.modelData} })`);
                     else
-                        Hyprland.dispatch('hl.dsp.focus({ workspace = ' + entry.modelData.id + ' })');
+                        Hyprland.dispatch(`hl.dsp.focus({ workspace = ${entry.modelData} })`);
                 }
 
                 Rectangle {
@@ -92,22 +67,22 @@ Rectangle {
 
                     // Vacío: círculo perfecto (ancho = alto), sin nada dentro.
                     // Con ventanas: se alarga lo justo para los iconos.
-                    implicitHeight: workspaces.pillSize
-                    implicitWidth: entry.modelData.occupied ? Math.max(workspaces.pillSize, icons.implicitWidth + 18) : workspaces.pillSize
+                    implicitHeight: Theme.workspaceSize
+                    implicitWidth: entry.occupied ? Math.max(Theme.workspaceSize, icons.implicitWidth + 18) : Theme.workspaceSize
                     radius: height / 2
 
-                    color: entry.modelData.focused ? Colors.workspaceActiveBg : entry.containsMouse ? Colors.workspaceHoverBg : Colors.workspaceEmptyBg
+                    color: entry.focused ? Colors.workspaceActiveBg : entry.containsMouse ? Colors.workspaceHoverBg : Colors.workspaceEmptyBg
 
                     Behavior on implicitWidth {
                         NumberAnimation {
-                            duration: 150
-                            easing.type: Easing.OutCubic
+                            duration: Theme.animNormal
+                            easing.type: Theme.easing
                         }
                     }
 
                     Behavior on color {
                         ColorAnimation {
-                            duration: 150
+                            duration: Theme.animNormal
                         }
                     }
 
@@ -115,13 +90,13 @@ Rectangle {
                         id: icons
                         anchors.centerIn: parent
 
-                        workspaceId: entry.modelData.id
+                        workspaceId: entry.modelData
                         // También se ilumina al pasar el mouse, no solo al estar enfocado.
-                        iconColor: entry.modelData.focused || entry.containsMouse ? Colors.workspaceActive : Colors.workspaceIdle
+                        iconColor: entry.focused || entry.containsMouse ? Colors.workspaceActive : Colors.workspaceIdle
 
                         Behavior on iconColor {
                             ColorAnimation {
-                                duration: 120
+                                duration: Theme.animFast
                             }
                         }
                     }

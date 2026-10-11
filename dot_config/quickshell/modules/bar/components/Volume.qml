@@ -1,136 +1,40 @@
-import Quickshell
-import Quickshell.Services.Pipewire
 import QtQuick
 import QtQuick.Layouts
 
-import "../../config"
+import "../../common"
+import "../../services"
 
-Rectangle {
+// Pill de volumen: micrófono y salida. El click derecho pide abrir el
+// mezclador; TopBar decide (es quien maneja los desplegables).
+BarPill {
     id: volume
 
-    property real hPadding: 12
-    property real bottomRadius: 15
-    property real barHeight: 34
-    // Cuánto cambia el volumen por cada paso de rueda.
-    property real step: 0.05
+    signal mixerToggleRequested
 
-    readonly property PwNode sink: Pipewire.defaultAudioSink
-    readonly property PwNode source: Pipewire.defaultAudioSource
+    contentWidth: row.implicitWidth
 
-    // Panel del mezclador, desplegable con el click derecho.
-    property bool expanded: false
+    // nf-md-microphone / microphone_off
+    readonly property string micOn: "\u{f036c}"
+    readonly property string micOff: "\u{f036d}"
+    // nf-md-volume_high / low / medium / off
+    readonly property string volHigh: "\u{f057e}"
+    readonly property string volLow: "\u{f057f}"
+    readonly property string volMid: "\u{f0580}"
+    readonly property string volOff: "\u{f075f}"
 
-    implicitWidth: row.implicitWidth + hPadding * 2
-    implicitHeight: barHeight
-
-    color: Colors.barBackground
-    bottomLeftRadius: bottomRadius
-    bottomRightRadius: bottomRadius
-
-    // Sin esto los nodos no reportan volumen ni mute.
-    PwObjectTracker {
-        objects: Pipewire.nodes.values
+    // El icono sigue el nivel, como los format-icons de waybar.
+    function sinkIcon() {
+        const pct = Audio.percent(Audio.sink);
+        if (Audio.isMuted(Audio.sink) || pct === 0)
+            return volume.volOff;
+        return pct < 34 ? volume.volLow : pct < 67 ? volume.volMid : volume.volHigh;
     }
 
-    // Click derecho en cualquier parte de la pill abre el mezclador. Va detrás
-    // de las zonas de cada canal, que solo aceptan el botón izquierdo.
+    // Detrás de los controles, que solo aceptan izquierdo y medio.
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.RightButton
-        onClicked: volume.expanded = !volume.expanded
-    }
-
-    function percent(node) {
-        return Math.round((node?.audio?.volume ?? 0) * 100);
-    }
-
-    function label(node) {
-        return node?.audio?.muted ? "---" : volume.percent(node) + "%";
-    }
-
-    // Dispositivos de salida disponibles, ordenados por id para que el ciclo
-    // sea estable entre invocaciones.
-    readonly property var sinks: Pipewire.nodes.values.filter(n => n.isSink && !n.isStream && n.audio).sort((a, b) => a.id - b.id)
-
-    function cycleSink() {
-        const list = volume.sinks;
-        if (list.length < 2)
-            return;
-
-        const current = list.findIndex(n => n.id === volume.sink?.id);
-        Pipewire.preferredDefaultAudioSink = list[(current + 1) % list.length];
-    }
-
-    function toggleMute(node) {
-        const audio = node?.audio;
-        if (!audio)
-            return;
-
-        audio.muted = !audio.muted;
-    }
-
-    function scrollVolume(node, delta) {
-        const audio = node?.audio;
-        if (!audio)
-            return;
-
-        const dir = delta > 0 ? 1 : -1;
-        audio.volume = Math.max(0, Math.min(1, audio.volume + dir * volume.step));
-    }
-
-    // Color del texto según estado: muteado manda sobre el hover.
-    function textColor(node, hovered) {
-        if (node?.audio?.muted)
-            return Colors.alert;
-
-        return hovered ? Colors.accent : Colors.foreground;
-    }
-
-    // Ancho reservado para un porcentaje. Se fija con el caso más largo para
-    // que ni la pill ni los iconos se muevan al cambiar de 2 a 3 cifras.
-    TextMetrics {
-        id: pctMetrics
-        font: micPct.font
-        text: "100%"
-    }
-
-    // El glifo de micrófono tachado no mide igual que el normal; se reserva el
-    // mayor para que el icono no se corra al mutear.
-    TextMetrics {
-        id: micIconMetrics
-        font: micIcon.font
-        text: "\u{f036c}"
-    }
-
-    TextMetrics {
-        id: micIconMutedMetrics
-        font: micIcon.font
-        text: "\u{f036d}"
-    }
-
-    // Los cuatro glifos de salida tampoco miden igual entre sí.
-    TextMetrics {
-        id: sinkIconMetrics
-        font: sinkIcon.font
-        text: "\u{f057e}"
-    }
-
-    TextMetrics {
-        id: sinkIconLowMetrics
-        font: sinkIcon.font
-        text: "\u{f057f}"
-    }
-
-    TextMetrics {
-        id: sinkIconMedMetrics
-        font: sinkIcon.font
-        text: "\u{f0580}"
-    }
-
-    TextMetrics {
-        id: sinkIconOffMetrics
-        font: sinkIcon.font
-        text: "\u{f075f}"
+        onClicked: volume.mixerToggleRequested()
     }
 
     RowLayout {
@@ -138,123 +42,19 @@ Rectangle {
         anchors.centerIn: parent
         spacing: 12
 
-        // Entrada (micrófono). Un solo MouseArea cubre número, icono y el
-        // espacio entre ambos, que antes quedaba muerto al click.
-        MouseArea {
-            id: micArea
-
-            readonly property real gap: 5
-
-            implicitWidth: pctMetrics.width + gap + Math.max(micIconMetrics.width, micIconMutedMetrics.width)
-            implicitHeight: micPct.implicitHeight
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: volume.toggleMute(volume.source)
-            onWheel: wheel => volume.scrollVolume(volume.source, wheel.angleDelta.y)
-
-            Text {
-                id: micPct
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-
-                width: pctMetrics.width
-                horizontalAlignment: Text.AlignRight
-
-                text: volume.label(volume.source)
-                color: volume.textColor(volume.source, micArea.containsMouse)
-                font.family: "JetBrains Mono Nerd Font"
-                font.pixelSize: 13
-                font.bold: true
-
-                Behavior on color {
-                    ColorAnimation {
-                        duration: 120
-                    }
-                }
-            }
-
-            Text {
-                id: micIcon
-                anchors.left: micPct.right
-                anchors.leftMargin: micArea.gap
-                anchors.verticalCenter: parent.verticalCenter
-
-                text: volume.source?.audio?.muted ? "\u{f036d}" : "\u{f036c}"
-                color: volume.textColor(volume.source, micArea.containsMouse)
-                font.family: "JetBrains Mono Nerd Font"
-                font.pixelSize: 13
-                font.bold: true
-
-                Behavior on color {
-                    ColorAnimation {
-                        duration: 120
-                    }
-                }
-            }
+        AudioControl {
+            node: Audio.source
+            iconFirst: false
+            icon: Audio.isMuted(Audio.source) ? volume.micOff : volume.micOn
+            iconGlyphs: [volume.micOn, volume.micOff]
         }
 
-        // Salida (altavoces): icono primero, número después.
-        MouseArea {
-            id: sinkArea
-
-            readonly property real gap: 5
-            readonly property real iconWidth: Math.max(sinkIconMetrics.width, sinkIconLowMetrics.width, sinkIconMedMetrics.width, sinkIconOffMetrics.width)
-
-            implicitWidth: iconWidth + gap + pctMetrics.width
-            implicitHeight: sinkPct.implicitHeight
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            acceptedButtons: Qt.LeftButton | Qt.MiddleButton
-            // Izquierdo mutea, medio pasa al siguiente dispositivo de salida.
-            onClicked: mouse => {
-                if (mouse.button === Qt.MiddleButton)
-                    volume.cycleSink();
-                else
-                    volume.toggleMute(volume.sink);
-            }
-            onWheel: wheel => volume.scrollVolume(volume.sink, wheel.angleDelta.y)
-
-            Text {
-                id: sinkIcon
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-
-                readonly property int pct: volume.percent(volume.sink)
-                // El icono sigue el nivel, como los format-icons de waybar.
-                text: volume.sink?.audio?.muted || pct === 0 ? "\u{f075f}" : pct < 34 ? "\u{f057f}" : pct < 67 ? "\u{f0580}" : "\u{f057e}"
-                color: volume.textColor(volume.sink, sinkArea.containsMouse)
-                font.family: "JetBrains Mono Nerd Font"
-                font.pixelSize: 13
-                font.bold: true
-
-                Behavior on color {
-                    ColorAnimation {
-                        duration: 120
-                    }
-                }
-            }
-
-            Text {
-                id: sinkPct
-                anchors.left: parent.left
-                anchors.leftMargin: sinkArea.iconWidth + sinkArea.gap
-                anchors.verticalCenter: parent.verticalCenter
-
-                width: pctMetrics.width
-                horizontalAlignment: Text.AlignLeft
-
-                text: volume.label(volume.sink)
-                color: volume.textColor(volume.sink, sinkArea.containsMouse)
-                font.family: "JetBrains Mono Nerd Font"
-                font.pixelSize: 13
-                font.bold: true
-
-                Behavior on color {
-                    ColorAnimation {
-                        duration: 120
-                    }
-                }
-            }
+        // Click medio: pasa al siguiente dispositivo de salida.
+        AudioControl {
+            node: Audio.sink
+            icon: volume.sinkIcon()
+            iconGlyphs: [volume.volHigh, volume.volLow, volume.volMid, volume.volOff]
+            onMiddleClicked: Audio.cycleSink()
         }
     }
 }

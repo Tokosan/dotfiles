@@ -1,10 +1,11 @@
-import Quickshell
 import Quickshell.Services.Pipewire
 import QtQuick
 import QtQuick.Layouts
 
 import "../../config"
+import "../../services"
 
+// Fila del mezclador: icono (click = mute), nombre, porcentaje y slider.
 Item {
     id: mixerRow
 
@@ -24,26 +25,22 @@ Item {
             Layout.fillWidth: true
             spacing: 7
 
-            // Click en el icono: mutea este canal.
             MouseArea {
+                id: muteArea
                 implicitWidth: iconText.implicitWidth
                 implicitHeight: iconText.implicitHeight
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                    const audio = mixerRow.node?.audio;
-                    if (audio)
-                        audio.muted = !audio.muted;
-                }
+                onClicked: Audio.toggleMute(mixerRow.node)
 
                 Text {
                     id: iconText
                     anchors.centerIn: parent
 
                     text: mixerRow.icon
-                    color: mixerRow.node?.audio?.muted ? Colors.alert : parent.containsMouse ? Colors.accent : Colors.foreground
-                    font.family: "JetBrains Mono Nerd Font"
-                    font.pixelSize: 12
+                    color: Audio.isMuted(mixerRow.node) ? Colors.alert : muteArea.containsMouse ? Colors.accent : Colors.text
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontMd
                 }
             }
 
@@ -52,16 +49,16 @@ Item {
 
                 text: mixerRow.label
                 elide: Text.ElideRight
-                color: Colors.foreground
-                font.family: "JetBrains Mono Nerd Font"
-                font.pixelSize: 11
+                color: Colors.text
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontBody
             }
 
             Text {
-                text: mixerRow.node?.audio?.muted ? "---" : Math.round((mixerRow.node?.audio?.volume ?? 0) * 100) + "%"
-                color: Qt.alpha(Colors.foreground, 0.7)
-                font.family: "JetBrains Mono Nerd Font"
-                font.pixelSize: 10
+                text: Audio.label(mixerRow.node)
+                color: Colors.textSecondary
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSm
                 font.bold: true
             }
         }
