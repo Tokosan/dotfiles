@@ -1,7 +1,6 @@
 pragma Singleton
 
 import Quickshell
-import Quickshell.Io
 import Quickshell.Hyprland
 import QtQuick
 
@@ -16,11 +15,19 @@ Singleton {
     // cambiara con el launcher abierto, la ventana saltaría de monitor.
     property string screenName: ""
 
-    // Ids de los .desktop, en el orden elegido por el usuario.
-    property var favorites: []
+    // Ids de los .desktop, en el orden elegido por el usuario. Se cambia con
+    // setFavorites/toggleFavorite/reorderFavorites, que además lo guardan.
+    readonly property alias favorites: store.favorites
+    // Aviso sobre launcher.json (ilegible, copia guardada...); vacío si no hay.
+    readonly property alias storeProblem: store.problem
+
+    // Sin pantalla (IPC, atajo de teclado) se usa la enfocada.
+    function resolveScreen(screenName) {
+        return screenName || (Hyprland.focusedMonitor?.name ?? "");
+    }
 
     function show(screenName) {
-        root.screenName = screenName || (Hyprland.focusedMonitor?.name ?? "");
+        root.screenName = root.resolveScreen(screenName);
         root.open = true;
     }
 
@@ -28,11 +35,14 @@ Singleton {
         root.open = false;
     }
 
+    // Pedirlo desde otra pantalla lo mueve allí en vez de cerrarlo: quien
+    // pulsa el botón de la otra barra quiere verlo, no que desaparezca.
     function toggle(screenName) {
-        if (root.open)
+        const target = root.resolveScreen(screenName);
+        if (root.open && target === root.screenName)
             root.close();
         else
-            root.show(screenName);
+            root.show(target);
     }
 
     function isFavorite(id) {
@@ -46,28 +56,24 @@ Singleton {
             root.setFavorites(root.favorites.concat([id]));
     }
 
-    function setFavorites(list) {
-        root.favorites = list;
-        favFile.setText(JSON.stringify({
-            favorites: list
-        }, null, 2));
+    // Aplica el orden nuevo de los favoritos que se ven en la grilla. Los
+    // que no se ven (app desinstalada, disco sin montar) conservan su hueco:
+    // guardar solo la lista visible los borraría del archivo para siempre.
+    function reorderFavorites(visibleOrder) {
+        const visible = new Set(visibleOrder);
+        let next = 0;
+        root.setFavorites(root.favorites.map(id => visible.has(id) ? visibleOrder[next++] : id));
     }
 
-    // Va en el directorio de estado y no en el repo: cambia cada vez que se
-    // reordena, y chezmoi lo pisaría en el siguiente apply.
-    FileView {
-        id: favFile
-        path: Quickshell.statePath("launcher.json")
-        preload: true
+    function dismissStoreProblem() {
+        store.dismissProblem();
+    }
 
-        onLoaded: {
-            try {
-                const data = JSON.parse(favFile.text());
-                if (Array.isArray(data.favorites))
-                    root.favorites = data.favorites;
-            } catch (e) {
-                console.warn("LauncherState: no se pudo leer launcher.json:", e);
-            }
-        }
+    function setFavorites(list) {
+        store.save(list);
+    }
+
+    FavoritesStore {
+        id: store
     }
 }

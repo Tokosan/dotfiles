@@ -39,6 +39,9 @@ Singleton {
     // verde reconocibles y la señal se perdería.
     readonly property color alert: "#f38ba8"      // mute, confirmaciones peligrosas
     readonly property color accent: "#a6e3a1"     // hover, elemento activo
+    // Fondo de un aviso con texto en `alert` (p. ej. launcher.json ilegible):
+    // tenue para que el texto rojo se lea sobre él.
+    readonly property color alertSurface: Qt.alpha(root.alert, 0.15)
 
     // ── Texto ─────────────────────────────────────────────────────────
     readonly property color text: root.foreground

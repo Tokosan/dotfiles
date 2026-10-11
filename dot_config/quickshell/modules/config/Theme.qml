@@ -41,6 +41,18 @@ Singleton {
     // Radio de los elementos dentro de un panel (filas, pestañas, tiles).
     readonly property real itemRadius: 7
 
+    // ── Launcher ──────────────────────────────────────────────────────
+    readonly property real launcherWidth: 620
+    readonly property real launcherHeight: 470
+    // Columnas de las grillas de apps; el ancho de celda sale de dividir.
+    readonly property int launcherColumns: 6
+    readonly property real launcherCellHeight: 88
+    readonly property real launcherIconSize: 40
+    readonly property real launcherSearchHeight: 34
+    // Radio del campo de búsqueda y de los tiles: más redondo que itemRadius
+    // porque son elementos más grandes.
+    readonly property real launcherTileRadius: 10
+
     // ── Animaciones ───────────────────────────────────────────────────
     readonly property int animFast: 120      // color de hover
     readonly property int animNormal: 160    // abrir/cerrar paneles
