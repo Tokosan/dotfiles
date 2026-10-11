@@ -42,6 +42,10 @@ hl.config({
     misc = {
         disable_hyprland_logo = true,
     },
+    binds = {
+        -- 0 means a mouse bind never registers as a drag; needs a few px of travel
+        drag_threshold = 10,
+    },
     animations = {
         enabled = true,
     },
