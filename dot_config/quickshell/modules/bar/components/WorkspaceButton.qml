@@ -69,7 +69,10 @@ Item {
     readonly property string fallbackIcon: "\u{f059}"
 
     function appIcon(toplevel) {
-        const cls = (toplevel.lastIpcObject?.["class"] ?? "").toLowerCase();
+        // appId llega apenas se abre la ventana. lastIpcObject solo se llena
+        // al refrescar los toplevels (al arrancar), así que una ventana nueva
+        // se quedaba sin icono hasta reiniciar la config.
+        const cls = (toplevel.wayland?.appId || toplevel.lastIpcObject?.["class"] || "").toLowerCase();
         const title = (toplevel.title ?? "").toLowerCase();
 
         for (const entry of button.iconMap) {
@@ -101,7 +104,7 @@ Item {
                 // Un delegate invisible no debe ocupar espacio en el layout.
                 Layout.preferredWidth: visible ? implicitWidth : 0
 
-                text: modelData.lastIpcObject ? button.appIcon(modelData) : ""
+                text: modelData.wayland || modelData.lastIpcObject ? button.appIcon(modelData) : ""
                 color: button.iconColor
                 font.family: "JetBrains Mono Nerd Font"
                 font.pixelSize: button.iconSize
