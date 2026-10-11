@@ -166,6 +166,8 @@ valores interpolados (rompe con comillas en rutas y abre inyección).
 - Modelos de listas que cambian (PipeWire, Hyprland): `ScriptModel { values: ... }`
   o una lista fija de ids. Un array JS recalculado como modelo recrea todos
   los delegates en cada cambio (se pierden animaciones, hover y arrastres).
+- Nada de `SoundEffect`/`MediaPlayer` (QtMultimedia): ver "Logs". Sonidos
+  con `Sounds.play()`.
 - Lo que no se ve no existe: vistas grandes en `Loader`/`LazyLoader`
   (`active:` según si se muestran), sobre todo si lanzan procesos.
 - Componentes exponen `signal`s; el contenedor decide qué hacer.
@@ -217,10 +219,16 @@ dos cambios seguidos se esperan en vez de pisarse. Su uso:
 ## Logs
 
 El log de la instancia vive en `/run/user/1000/quickshell/by-id/<id>/`, que es
-**tmpfs (RAM)**. El 2026-10-10 un bucle de `QSocketNotifier: Invalid socket`
-tras un error de PipeWire lo llevó a 3 GB y llenó `/run/user/1000`, lo que
-rompe Wayland, PipeWire y D-Bus. Si la sesión se pone rara:
-`du -sh /run/user/1000/quickshell` y ver `TODO.md`.
+**tmpfs (RAM)**: si algo spamea, llena `/run/user/1000` y se rompen Wayland,
+PipeWire y D-Bus. Si la sesión se pone rara: `du -sh /run/user/1000/quickshell`.
+
+Caso conocido (2026-10-10, resuelto): un `SoundEffect` de QtMultimedia deja
+un stream abierto pegado a la salida de audio; al apagarse unos audífonos
+Bluetooth, Qt entró en un bucle de `QSocketNotifier: Invalid socket` (3 GB).
+Por eso **no se usa QtMultimedia**: los sonidos van por `Sounds.play()`, que
+lanza `pw-play`. Para probar algo que toque audio, simular la desconexión:
+`m=$(pactl load-module module-null-sink sink_name=fake); pactl set-default-sink fake;`
+reproducir algo, `pactl unload-module $m`, y mirar si el log crece.
 
 ## Commits
 

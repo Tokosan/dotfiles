@@ -36,12 +36,6 @@ de pywal. Waybar ya no arranca con Hyprland.
 
 ## Deuda técnica
 
-- [ ] **Spam de `QSocketNotifier: Invalid socket`** tras un
-      `Pipewire error ... code -14`: llenó `/run/user/1000` (3 GB) el
-      2026-10-10. Ya se redujeron los `SoundEffect` (uno solo, en
-      `Sounds.qml`) y los `PwObjectTracker` (uno solo, en `Audio.qml`). Si
-      vuelve a pasar, bisecar: desactivar `Sounds` y luego `Audio`. Ver
-      "Logs" en CLAUDE.md para vigilar el tamaño del log.
 - [ ] `expandRoom` en `TopBar.qml` es un número fijo (460). Si un desplegable
       nuevo es más alto, subirlo o darle scroll.
 - [ ] Los glifos de `WorkspaceButton.iconMap` no tienen el nombre Nerd Font

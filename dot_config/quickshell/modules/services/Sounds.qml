@@ -2,14 +2,21 @@ pragma Singleton
 
 import Quickshell
 import QtQuick
-import QtMultimedia
 
-// Chime de feedback compartido por toda la shell. Un solo SoundEffect en vez
-// de uno por componente y por barra: cada instancia abre su propio decoder, y
-// tener varios coincidió con el bucle de "QSocketNotifier: Invalid socket"
-// que llenó /run/user tras un error de PipeWire (ver CLAUDE.md).
+// Chime de feedback compartido por toda la shell.
+//
+// Cada sonido es un `pw-play` corto e independiente, NO un SoundEffect de
+// QtMultimedia. SoundEffect deja un stream abierto pegado a la salida por
+// defecto; si esa salida desaparece (p. ej. unos audífonos Bluetooth que se
+// apagan), el backend de Qt entra en un bucle de
+// "QSocketNotifier: Invalid socket" que escribe cientos de miles de líneas
+// por segundo en el log (tmpfs) hasta llenar /run/user. Reproducido el
+// 2026-10-10 quitando un sink con `pactl unload-module`. No volver a usar
+// SoundEffect ni MediaPlayer para esto.
 Singleton {
     id: root
+
+    readonly property string chimePath: Quickshell.shellPath("assets/chime.wav")
 
     // El volumen sigue el peso de la acción: cambiar de pestaña pesa menos
     // que aplicar un fondo.
@@ -21,12 +28,7 @@ Singleton {
         })
 
     function play(weight) {
-        chime.volume = root.volumes[weight] ?? root.volumes.normal;
-        chime.play();
-    }
-
-    SoundEffect {
-        id: chime
-        source: Qt.resolvedUrl("../../assets/chime.wav")
+        const volume = root.volumes[weight] ?? root.volumes.normal;
+        Quickshell.execDetached(["pw-play", "--volume", String(volume), root.chimePath]);
     }
 }
