@@ -106,7 +106,11 @@ PanelWindow {
                     else
                         favGrid.activate(0);
                 }
-                onTabPressed: window.tab = window.tab === "favs" ? "all" : "favs"
+                // Va a la pestaña que no se está viendo. Buscando se ve All
+                // aunque la elegida sea Favorites, así que alternar `tab` a
+                // secas no cambiaba nada en pantalla; además borra la búsqueda,
+                // igual que hacer click en una pestaña.
+                onTabPressed: window.selectTab(window.showingAll ? "favs" : "all")
             }
 
             RowLayout {
