@@ -1,7 +1,5 @@
 pragma ComponentBehavior: Bound
 
-import Quickshell
-import Quickshell.Io
 import QtQuick
 import QtQuick.Layouts
 
@@ -22,46 +20,25 @@ Item {
     required property string monitor
 
     property string kind: "image"
-    property string current: ""
 
     readonly property var entries: grid.kind === "video" ? lists.videos : grid.kind === "scene" ? lists.scenes : lists.statics
 
     implicitHeight: header.implicitHeight + 6 + tabs.implicitHeight + 6 + view.height
 
-    function apply(entry) {
-        // El script ya hace symlink, awww, pywal y la imagen de lockscreen.
-        applyProcess.command = [Settings.wallpaperScript, entry.path, "--monitor", grid.monitor, "--wal", "--lock-file"];
-        applyProcess.running = true;
-        grid.current = entry.path;
-        Sounds.play("strong");
-    }
-
-    Process {
-        id: applyProcess
+    WallpaperApplier {
+        id: applier
+        monitor: grid.monitor
     }
 
     WallpaperLists {
         id: lists
     }
 
-    // Resuelve a qué archivo apunta el symlink, para marcar el activo.
-    Process {
-        id: currentProcess
-        running: true
-        command: ["readlink", "-f", `${Settings.wallpaperDir}/current-wallpaper`]
-
-        stdout: StdioCollector {
-            id: currentOut
-
-            onStreamFinished: grid.current = currentOut.text.trim()
-        }
-    }
-
     RowLayout {
         id: header
-        anchors.top: parent.top
-        anchors.left: parent.left
-        anchors.right: parent.right
+        anchors.top: grid.top
+        anchors.left: grid.left
+        anchors.right: grid.right
         spacing: 8
 
         MouseArea {
@@ -74,7 +51,7 @@ Item {
 
             Text {
                 id: backIcon
-                anchors.centerIn: parent
+                anchors.centerIn: backButton
 
                 text: "\u{f104}" // angle-left
                 color: backButton.containsMouse ? Colors.accent : Colors.text
@@ -102,7 +79,7 @@ Item {
         id: tabs
         anchors.top: header.bottom
         anchors.topMargin: 6
-        anchors.left: parent.left
+        anchors.left: grid.left
 
         tabs: [
             {
@@ -131,8 +108,8 @@ Item {
         id: view
         anchors.top: tabs.bottom
         anchors.topMargin: 6
-        anchors.left: parent.left
-        anchors.right: parent.right
+        anchors.left: grid.left
+        anchors.right: grid.right
 
         height: 260
         clip: true
@@ -150,8 +127,10 @@ Item {
             height: view.cellHeight
             thumb: tile.modelData.thumb
             kind: tile.modelData.kind
-            current: tile.modelData.path === grid.current
-            onActivated: grid.apply(tile.modelData)
+            current: tile.modelData.path === applier.current
+            pending: tile.modelData.path === applier.pending || tile.modelData.path === applier.queued?.path
+            failed: tile.modelData.path === applier.failed
+            onActivated: applier.apply(tile.modelData)
         }
     }
 }

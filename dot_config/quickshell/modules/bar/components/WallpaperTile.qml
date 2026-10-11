@@ -23,7 +23,7 @@ Item {
 
     Rectangle {
         id: frame
-        anchors.fill: parent
+        anchors.fill: tile
         anchors.margins: 3
 
         radius: Theme.itemRadius
@@ -42,7 +42,7 @@ Item {
 
         Image {
             id: image
-            anchors.fill: parent
+            anchors.fill: frame
             anchors.margins: 2
 
             source: Util.fileUrl(tile.thumb)
@@ -66,6 +66,7 @@ Item {
         // Distintivo para los animados: sin él, un vídeo y una imagen se ven
         // idénticos en la grilla.
         Rectangle {
+            id: badge
             visible: tile.kind !== "image"
             anchors.right: image.right
             anchors.bottom: image.bottom
@@ -77,7 +78,7 @@ Item {
             color: Colors.badgeBackground
 
             Text {
-                anchors.centerIn: parent
+                anchors.centerIn: badge
                 // f04b: play (vídeo) · f0d0: varita mágica (scene)
                 text: tile.kind === "video" ? "\u{f04b}" : "\u{f0d0}"
                 color: Colors.badgeForeground
@@ -88,7 +89,7 @@ Item {
 
         MouseArea {
             id: area
-            anchors.fill: parent
+            anchors.fill: frame
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: tile.activated()
