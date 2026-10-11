@@ -21,8 +21,13 @@ Singleton {
     // Aviso sobre launcher.json (ilegible, copia guardada...); vacío si no hay.
     readonly property alias storeProblem: store.problem
 
+    // Sin pantalla (IPC, atajo de teclado) se usa la enfocada.
+    function resolveScreen(screenName) {
+        return screenName || (Hyprland.focusedMonitor?.name ?? "");
+    }
+
     function show(screenName) {
-        root.screenName = screenName || (Hyprland.focusedMonitor?.name ?? "");
+        root.screenName = root.resolveScreen(screenName);
         root.open = true;
     }
 
@@ -30,11 +35,14 @@ Singleton {
         root.open = false;
     }
 
+    // Pedirlo desde otra pantalla lo mueve allí en vez de cerrarlo: quien
+    // pulsa el botón de la otra barra quiere verlo, no que desaparezca.
     function toggle(screenName) {
-        if (root.open)
+        const target = root.resolveScreen(screenName);
+        if (root.open && target === root.screenName)
             root.close();
         else
-            root.show(screenName);
+            root.show(target);
     }
 
     function isFavorite(id) {
