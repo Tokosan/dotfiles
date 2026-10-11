@@ -5,3 +5,5 @@
 .config/swaync
 {{- end }}
 .config/quickshell/CLAUDE.md
+.config/quickshell/check.sh
+.config/quickshell/DESHACER.md
