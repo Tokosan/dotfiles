@@ -46,6 +46,15 @@ Singleton {
             root.setFavorites(root.favorites.concat([id]));
     }
 
+    // Aplica el orden nuevo de los favoritos que se ven en la grilla. Los
+    // que no se ven (app desinstalada, disco sin montar) conservan su hueco:
+    // guardar solo la lista visible los borraría del archivo para siempre.
+    function reorderFavorites(visibleOrder) {
+        const visible = new Set(visibleOrder);
+        let next = 0;
+        root.setFavorites(root.favorites.map(id => visible.has(id) ? visibleOrder[next++] : id));
+    }
+
     function setFavorites(list) {
         root.favorites = list;
         favFile.setText(JSON.stringify({

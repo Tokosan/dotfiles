@@ -48,7 +48,7 @@ Item {
         const ids = [];
         for (let i = 0; i < favModel.count; i++)
             ids.push(favModel.get(i).appId);
-        LauncherState.setFavorites(ids);
+        LauncherState.reorderFavorites(ids);
     }
 
     ListModel {
