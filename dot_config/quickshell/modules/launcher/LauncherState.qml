@@ -1,7 +1,6 @@
 pragma Singleton
 
 import Quickshell
-import Quickshell.Io
 import Quickshell.Hyprland
 import QtQuick
 
@@ -16,8 +15,9 @@ Singleton {
     // cambiara con el launcher abierto, la ventana saltaría de monitor.
     property string screenName: ""
 
-    // Ids de los .desktop, en el orden elegido por el usuario.
-    property var favorites: []
+    // Ids de los .desktop, en el orden elegido por el usuario. Se cambia con
+    // setFavorites/toggleFavorite/reorderFavorites, que además lo guardan.
+    readonly property alias favorites: store.favorites
 
     function show(screenName) {
         root.screenName = screenName || (Hyprland.focusedMonitor?.name ?? "");
@@ -56,27 +56,10 @@ Singleton {
     }
 
     function setFavorites(list) {
-        root.favorites = list;
-        favFile.setText(JSON.stringify({
-            favorites: list
-        }, null, 2));
+        store.save(list);
     }
 
-    // Va en el directorio de estado y no en el repo: cambia cada vez que se
-    // reordena, y chezmoi lo pisaría en el siguiente apply.
-    FileView {
-        id: favFile
-        path: Quickshell.statePath("launcher.json")
-        preload: true
-
-        onLoaded: {
-            try {
-                const data = JSON.parse(favFile.text());
-                if (Array.isArray(data.favorites))
-                    root.favorites = data.favorites;
-            } catch (e) {
-                console.warn("LauncherState: no se pudo leer launcher.json:", e);
-            }
-        }
+    FavoritesStore {
+        id: store
     }
 }
