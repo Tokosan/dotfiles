@@ -31,6 +31,16 @@ while [[ $# -gt 0 ]]; do
 done
 set -- "${args[@]+"${args[@]}"}"
 
+# Recuerda qué fondo animado tiene cada pantalla, para que wallpaper-restore
+# lo relance al arrancar: linux-wallpaperengine y mpvpaper no guardan estado,
+# a diferencia de awww, que restaura el estático por su cuenta.
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/wallpaper"
+
+remember() {
+    mkdir -p "$STATE_DIR"
+    printf '%s\n' "$2" >"$STATE_DIR/$1"
+}
+
 monitors() {
     case "$MONITOR" in
         all)
@@ -128,6 +138,7 @@ start() {
             --fps "$FPS" --silent --assets-dir "$ASSETS" \
             >/dev/null 2>&1
 
+        remember "$mon" "scene $id"
         printf 'Scene en %s: %s\n' "$mon" "$titulo"
     done
 }
@@ -136,6 +147,7 @@ stop() {
     local mon
     for mon in $(monitors); do
         stop_monitor "$mon"
+        remember "$mon" "image"
         printf 'Scene detenida en %s\n' "$mon"
     done
     awww restore 2>/dev/null || true

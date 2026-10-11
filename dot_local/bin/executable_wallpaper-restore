@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Relanza en cada pantalla el último fondo animado (scene o vídeo) que tenía.
+# Se llama desde el autostart de Hyprland. Los estáticos no hacen falta:
+# awww-daemon ya restaura el último por su cuenta.
+#
+# El estado lo escriben wallpaper-scene y wallpaper-video en
+# ~/.local/state/wallpaper/<monitor>: "scene <id>", "video <ruta>" o "image".
+set -uo pipefail
+
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/wallpaper"
+
+[[ -d "$STATE_DIR" ]] || exit 0
+
+# Solo las pantallas conectadas: si un monitor no está, su fondo se queda
+# guardado para la próxima vez en vez de fallar.
+connected="$(hyprctl monitors -j 2>/dev/null |
+    python3 -c 'import json,sys; [print(m["name"]) for m in json.load(sys.stdin)]' 2>/dev/null)"
+
+for file in "$STATE_DIR"/*; do
+    [[ -f "$file" ]] || continue
+    mon="$(basename "$file")"
+    grep -qxF "$mon" <<<"$connected" || continue
+
+    read -r kind value <"$file"
+    case "$kind" in
+        scene) wallpaper-scene start --monitor "$mon" "$value" ;;
+        video) [[ -f "$value" ]] && wallpaper-video start --monitor "$mon" "$value" ;;
+    esac
+done
