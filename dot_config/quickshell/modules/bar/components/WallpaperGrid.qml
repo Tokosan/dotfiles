@@ -46,67 +46,70 @@ Item {
         id: applyProcess
     }
 
-    // Lista las imágenes del directorio, excluyendo los symlinks que el propio
-    // script mantiene (current-wallpaper, current-lockscreen).
-    Process {
-        id: listProcess
+    // Lista los archivos de `dir` cuyo nombre calza con algún patrón. find va
+    // como array (sin sh -c: una comilla en la ruta rompía el comando) y con
+    // -print0, porque un nombre puede llevar saltos de línea pero nunca un
+    // NUL. El orden se hace aquí y no con `sort`, que exigiría un shell.
+    component FileList: Process {
+        id: lister
+
+        required property string dir
+        required property var patterns
+
+        signal listed(var paths)
+
         running: true
-        command: ["sh", "-c", `find '${Settings.wallpaperDir}' -maxdepth 1 -type f \\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \\) | sort`]
+        command: {
+            // ( -iname a -o -iname b ... ): un patrón por extensión.
+            const names = [];
+            for (const pattern of lister.patterns) {
+                if (names.length > 0)
+                    names.push("-o");
+                names.push("-iname", pattern);
+            }
+            return ["find", lister.dir, "-maxdepth", "1", "-type", "f", "(", ...names, ")", "-print0"];
+        }
 
         stdout: StdioCollector {
-            id: staticsOut
-
-            onStreamFinished: {
-                grid.statics = staticsOut.text.trim().split("\n").filter(p => p.length > 0).map(p => ({
-                            path: p,
-                            thumb: p,
-                            kind: "image"
-                        }));
-            }
+            id: listOut
+            onStreamFinished: lister.listed(listOut.text.split("\0").filter(p => p.length > 0).sort((a, b) => a.localeCompare(b)))
         }
+    }
+
+    // -type f deja fuera los symlinks que mantiene el propio script
+    // (current-wallpaper, current-lockscreen).
+    FileList {
+        dir: Settings.wallpaperDir
+        patterns: ["*.jpg", "*.jpeg", "*.png", "*.webp"]
+        onListed: paths => grid.statics = paths.map(p => ({
+                    path: p,
+                    thumb: p,
+                    kind: "image"
+                }))
     }
 
     // Los vídeos se muestran con la miniatura que pregenera `pregenerate-thumbs`;
     // un QML no puede sacar un fotograma de un mp4 por sí solo.
-    Process {
-        id: listVideos
-        running: true
-        command: ["sh", "-c", `find '${Settings.videoWallpaperDir}' -maxdepth 1 -type f \\( -iname '*.mp4' -o -iname '*.webm' -o -iname '*.mkv' \\) | sort`]
-
-        stdout: StdioCollector {
-            id: videosOut
-
-            onStreamFinished: {
-                grid.videos = videosOut.text.trim().split("\n").filter(p => p.length > 0).map(p => {
-                    const base = p.split("/").pop().replace(/\.[^.]+$/, "");
-                    return {
-                        path: p,
-                        thumb: `${Settings.wallpaperThumbDir}/video/${base}.jpg`,
-                        kind: "video"
-                    };
-                });
-            }
-        }
+    FileList {
+        dir: Settings.videoWallpaperDir
+        patterns: ["*.mp4", "*.webm", "*.mkv"]
+        onListed: paths => grid.videos = paths.map(p => ({
+                    path: p,
+                    thumb: `${Settings.wallpaperThumbDir}/video/${p.split("/").pop().replace(/\.[^.]+$/, "")}.jpg`,
+                    kind: "video"
+                }))
     }
 
     // Una scene se aplica por su id del Workshop, no por una ruta, así que se
     // listan desde el directorio de miniaturas ya generadas.
-    Process {
-        id: listScenes
-        running: true
-        command: ["sh", "-c", `find '${Settings.wallpaperThumbDir}/scene' -maxdepth 1 -name '*.jpg' 2>/dev/null | sort`]
-
-        stdout: StdioCollector {
-            id: scenesOut
-
-            onStreamFinished: {
-                grid.scenes = scenesOut.text.trim().split("\n").filter(p => p.length > 0).map(p => ({
-                            path: p.split("/").pop().replace(/\.jpg$/, ""),
-                            thumb: p,
-                            kind: "scene"
-                        }));
-            }
-        }
+    FileList {
+        dir: `${Settings.wallpaperThumbDir}/scene`
+        patterns: ["*.jpg"]
+        onListed: paths => grid.scenes = paths.map(p => ({
+                    path: p.split("/").pop().replace(/\.jpg$/, ""),
+                    thumb: p,
+                    kind: "scene"
+                }))
     }
 
     // Resuelve a qué archivo apunta el symlink, para marcar el activo.
