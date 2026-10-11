@@ -1,3 +1,10 @@
 singleton LauncherState 1.0 LauncherState.qml
+singleton AppCatalog 1.0 AppCatalog.qml
 Launcher 1.0 Launcher.qml
+LauncherWindow 1.0 LauncherWindow.qml
+SearchField 1.0 SearchField.qml
+AllAppsGrid 1.0 AllAppsGrid.qml
+FavoritesGrid 1.0 FavoritesGrid.qml
+FavoriteDelegate 1.0 FavoriteDelegate.qml
+EmptyMessage 1.0 EmptyMessage.qml
 AppTile 1.0 AppTile.qml

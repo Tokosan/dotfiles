@@ -12,20 +12,20 @@ Item {
     property var entry: null
     property bool hovered: false
     property bool favorite: false
-    // Primer resultado de la búsqueda: es el que abre Enter.
+    // La app que abre Enter: se marca con un borde.
     property bool highlighted: false
 
     Rectangle {
-        anchors.fill: parent
+        anchors.fill: tile
         anchors.margins: 3
-        radius: 10
-        color: tile.hovered ? Qt.alpha(Colors.foreground, 0.12) : tile.highlighted ? Qt.alpha(Colors.foreground, 0.07) : "transparent"
+        radius: Theme.launcherTileRadius
+        color: tile.hovered ? Colors.surfaceRaised : tile.highlighted ? Colors.surfaceSubtle : "transparent"
         border.width: tile.highlighted ? 1 : 0
-        border.color: Qt.alpha(Colors.accent, 0.6)
+        border.color: Colors.focusRing
 
         Behavior on color {
             ColorAnimation {
-                duration: 120
+                duration: Theme.animFast
             }
         }
     }
@@ -42,11 +42,11 @@ Item {
 
     IconImage {
         id: icon
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: parent.top
+        anchors.horizontalCenter: tile.horizontalCenter
+        anchors.top: tile.top
         anchors.topMargin: 12
 
-        implicitSize: 40
+        implicitSize: Theme.launcherIconSize
         visible: tile.iconSource !== ""
         source: tile.iconSource
     }
@@ -57,9 +57,9 @@ Item {
 
         // nf-md-application
         text: "\u{f08c6}"
-        color: Qt.alpha(Colors.foreground, 0.6)
-        font.family: "JetBrains Mono Nerd Font"
-        font.pixelSize: 32
+        color: Colors.textSecondary
+        font.family: Theme.fontFamily
+        font.pixelSize: Theme.fontIconLarge
     }
 
     // Marca de favorito, para distinguirlos en la pestaña All.
@@ -73,23 +73,23 @@ Item {
         // nf-fa-star
         text: "\u{f005}"
         color: Colors.accent
-        font.family: "JetBrains Mono Nerd Font"
-        font.pixelSize: 10
+        font.family: Theme.fontFamily
+        font.pixelSize: Theme.fontSm
     }
 
     Text {
         anchors.top: icon.bottom
         anchors.topMargin: 6
-        anchors.left: parent.left
-        anchors.right: parent.right
+        anchors.left: tile.left
+        anchors.right: tile.right
         anchors.leftMargin: 6
         anchors.rightMargin: 6
 
         text: tile.entry?.name ?? ""
-        color: Colors.foreground
+        color: Colors.text
         horizontalAlignment: Text.AlignHCenter
         elide: Text.ElideRight
-        font.family: "JetBrains Mono Nerd Font"
-        font.pixelSize: 10
+        font.family: Theme.fontFamily
+        font.pixelSize: Theme.fontSm
     }
 }
