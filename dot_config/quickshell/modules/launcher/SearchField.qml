@@ -12,6 +12,8 @@ Rectangle {
     signal escapePressed
     signal acceptPressed
     signal tabPressed
+    // Flechas: columnas (izq/der) y filas (arriba/abajo) a mover en la grilla.
+    signal moveSelection(int columns, int rows)
 
     function clear() {
         input.text = "";
@@ -58,6 +60,17 @@ Rectangle {
                 field.acceptPressed();
             else if (event.key === Qt.Key_Tab)
                 field.tabPressed();
+            // Izquierda/derecha también mueven la selección y no el cursor
+            // del texto: las búsquedas son de pocas letras y moverse por la
+            // grilla es lo que se usa.
+            else if (event.key === Qt.Key_Left)
+                field.moveSelection(-1, 0);
+            else if (event.key === Qt.Key_Right)
+                field.moveSelection(1, 0);
+            else if (event.key === Qt.Key_Up)
+                field.moveSelection(0, -1);
+            else if (event.key === Qt.Key_Down)
+                field.moveSelection(0, 1);
             else
                 return;
             event.accepted = true;

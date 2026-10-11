@@ -15,8 +15,11 @@ Item {
     property string query: ""
     // Índice marcado como "el que abre Enter"; -1 para ninguno.
     property int highlightedIndex: -1
+    readonly property int count: root.apps.length
 
     signal launched(var entry)
+
+    onHighlightedIndexChanged: grid.followHighlight()
 
     // Abre la app en esa posición (Enter desde el campo de búsqueda).
     function activate(index) {
@@ -33,6 +36,14 @@ Item {
         cellHeight: Theme.launcherCellHeight
         model: root.apps
         boundsBehavior: Flickable.StopAtBounds
+        // Con las flechas la selección puede salir de la vista; se desplaza
+        // lo justo para que se vea.
+        onCountChanged: grid.followHighlight()
+
+        function followHighlight() {
+            if (root.highlightedIndex >= 0 && root.highlightedIndex < grid.count)
+                grid.positionViewAtIndex(root.highlightedIndex, GridView.Contain);
+        }
 
         delegate: MouseArea {
             id: cell

@@ -43,6 +43,27 @@ PanelWindow {
     readonly property bool showingAll: window.searching || window.tab === "all"
     readonly property var results: AppCatalog.search(window.query)
 
+    // App que abre Enter, como posición en la grilla visible. Vuelve a la
+    // primera al cambiar lo que se ve, para que Enter abra el mejor resultado.
+    property int selectedIndex: 0
+    // El borde de selección solo aparece buscando o tras usar las flechas;
+    // al abrir sin más no se marca nada.
+    property bool keyboardUsed: false
+    readonly property int highlightedIndex: window.searching || window.keyboardUsed ? window.selectedIndex : -1
+
+    onQueryChanged: window.selectedIndex = 0
+    onShowingAllChanged: window.selectedIndex = 0
+
+    // Mueve la selección `step` posiciones (una fila = Theme.launcherColumns),
+    // sin salirse de la grilla.
+    function moveSelection(step) {
+        const count = window.showingAll ? allGrid.count : favGrid.count;
+        if (count === 0)
+            return;
+        window.keyboardUsed = true;
+        window.selectedIndex = Math.max(0, Math.min(count - 1, window.selectedIndex + step));
+    }
+
     function launch(entry) {
         AppCatalog.launch(entry);
         LauncherState.close();
@@ -102,10 +123,11 @@ PanelWindow {
                 onEscapePressed: LauncherState.close()
                 onAcceptPressed: {
                     if (window.showingAll)
-                        allGrid.activate(0);
+                        allGrid.activate(window.selectedIndex);
                     else
-                        favGrid.activate(0);
+                        favGrid.activate(window.selectedIndex);
                 }
+                onMoveSelection: (columns, rows) => window.moveSelection(columns + rows * Theme.launcherColumns)
                 // Va a la pestaña que no se está viendo. Buscando se ve All
                 // aunque la elegida sea Favorites, así que alternar `tab` a
                 // secas no cambiaba nada en pantalla; además borra la búsqueda,
@@ -130,7 +152,7 @@ PanelWindow {
                     visible: window.showingAll
                     apps: window.results
                     query: window.query
-                    highlightedIndex: window.searching ? 0 : -1
+                    highlightedIndex: window.highlightedIndex
                     onLaunched: entry => window.launch(entry)
                 }
 
@@ -138,6 +160,7 @@ PanelWindow {
                     id: favGrid
                     anchors.fill: gridArea
                     visible: !window.showingAll
+                    highlightedIndex: window.highlightedIndex
                     onLaunched: entry => window.launch(entry)
                 }
             }

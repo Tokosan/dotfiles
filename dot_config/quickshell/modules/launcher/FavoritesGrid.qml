@@ -22,6 +22,8 @@ Item {
 
     signal launched(var entry)
 
+    onHighlightedIndexChanged: grid.followHighlight()
+
     function activate(index) {
         if (index >= 0 && index < favModel.count)
             root.launched(DesktopEntries.byId(favModel.get(index).appId));
@@ -83,6 +85,14 @@ Item {
         cellHeight: Theme.launcherCellHeight
         model: favModel
         boundsBehavior: Flickable.StopAtBounds
+        // Con las flechas la selección puede salir de la vista; se desplaza
+        // lo justo para que se vea.
+        onCountChanged: grid.followHighlight()
+
+        function followHighlight() {
+            if (root.highlightedIndex >= 0 && root.highlightedIndex < grid.count)
+                grid.positionViewAtIndex(root.highlightedIndex, GridView.Contain);
+        }
 
         // Los demás iconos se corren con animación al abrir hueco al que se
         // arrastra.
