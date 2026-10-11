@@ -60,6 +60,9 @@ Lista: `git log --oneline main..quickshell-review`. Por área:
   solo existe mientras se mira.
 - `19e6d70` Borra `SoundIndicator.qml` (no se usaba).
 - `62cad67` El mezclador baja si el monitor de sistema está expandido.
+- `53a155e` Sonidos con `pw-play` en vez de `SoundEffect` (arregla el spam de
+  `QSocketNotifier` al desconectarse unos audífonos Bluetooth). **No
+  revertir sin otro arreglo**: volvería el riesgo de llenar `/run/user`.
 
 **Launcher** (rama integrada en `51d795e`)
 - `bc010b1` Divide Launcher.qml en componentes.
