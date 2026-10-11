@@ -17,6 +17,12 @@ Scope {
 
     // Ids de los .desktop, en el orden elegido por el usuario.
     property var favorites: []
+    // Aviso para la UI cuando el archivo no se pudo usar; vacío si todo bien.
+    property string problem: ""
+    // false mientras el archivo en disco sea ilegible y no tenga copia:
+    // guardar encima perdería los favoritos que el usuario quizá pueda
+    // recuperar a mano.
+    property bool writable: true
 
     // Versión del formato que escribe esta config. Al cambiar el formato: subir
     // este número y agregar el paso de conversión en normalize().
@@ -24,6 +30,10 @@ Scope {
 
     function save(list) {
         store.favorites = list;
+        if (!store.writable) {
+            console.warn("FavoritesStore: launcher.json ilegible y sin copia; no se guarda.");
+            return;
+        }
         file.setText(JSON.stringify({
             version: store.schemaVersion,
             favorites: list
@@ -57,10 +67,47 @@ Scope {
     function parse(text) {
         try {
             store.favorites = store.normalize(JSON.parse(text)).favorites;
+            // Si estaba bloqueado y ahora se lee bien (arreglado a mano),
+            // sobrescribirlo ya no pierde nada.
+            if (!store.writable) {
+                store.writable = true;
+                store.problem = "";
+            }
             return true;
         } catch (e) {
             console.warn("FavoritesStore: no se pudo leer launcher.json:", e);
             return false;
+        }
+    }
+
+    // El archivo existe pero no sirve: se aparta una copia antes de permitir
+    // que el próximo guardado lo reemplace.
+    function quarantine() {
+        store.writable = false;
+        backup.running = true;
+    }
+
+    function dismissProblem() {
+        store.problem = "";
+    }
+
+    Process {
+        id: backup
+        // numbered: si vuelve a pasar, no pisa la copia anterior (.bak.~1~).
+        command: ["cp", "--backup=numbered", "--", store.path, store.path + ".bak"]
+    }
+
+    // En Connections y no como onExited: qmllint no conoce el tipo del segundo
+    // parámetro (QProcess::ExitStatus) y avisa en el handler directo.
+    Connections {
+        target: backup
+        function onExited(exitCode) {
+            if (exitCode === 0) {
+                store.writable = true;
+                store.problem = "launcher.json was unreadable. Saved a copy as launcher.json.bak.";
+            } else {
+                store.problem = "launcher.json is unreadable and could not be backed up. Favorites won't be saved.";
+            }
         }
     }
 
@@ -79,12 +126,23 @@ Scope {
         // Que no exista es lo normal la primera vez; no ensuciar el log.
         printErrors: false
 
-        onLoaded: store.parse(file.text())
+        onLoaded: {
+            const text = file.text();
+            // Vacío no tiene nada que salvar: se trata como sin favoritos.
+            if (text.trim() === "")
+                store.favorites = [];
+            else if (!store.parse(text))
+                store.quarantine();
+        }
         onLoadFailed: error => {
-            if (error === FileViewError.FileNotFound)
+            if (error === FileViewError.FileNotFound) {
                 legacy.path = store.legacyPath;
-            else
+            } else {
+                // Sin permiso de lectura tampoco se puede copiar: solo bloquear.
                 console.warn("FavoritesStore: no se pudo abrir launcher.json:", FileViewError.toString(error));
+                store.writable = false;
+                store.problem = "launcher.json can't be read. Favorites won't be saved.";
+            }
         }
     }
 

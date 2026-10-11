@@ -18,6 +18,8 @@ Singleton {
     // Ids de los .desktop, en el orden elegido por el usuario. Se cambia con
     // setFavorites/toggleFavorite/reorderFavorites, que además lo guardan.
     readonly property alias favorites: store.favorites
+    // Aviso sobre launcher.json (ilegible, copia guardada...); vacío si no hay.
+    readonly property alias storeProblem: store.problem
 
     function show(screenName) {
         root.screenName = screenName || (Hyprland.focusedMonitor?.name ?? "");
@@ -53,6 +55,10 @@ Singleton {
         const visible = new Set(visibleOrder);
         let next = 0;
         root.setFavorites(root.favorites.map(id => visible.has(id) ? visibleOrder[next++] : id));
+    }
+
+    function dismissStoreProblem() {
+        store.dismissProblem();
     }
 
     function setFavorites(list) {

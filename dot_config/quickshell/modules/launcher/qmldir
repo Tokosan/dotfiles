@@ -8,4 +8,5 @@ AllAppsGrid 1.0 AllAppsGrid.qml
 FavoritesGrid 1.0 FavoritesGrid.qml
 FavoriteDelegate 1.0 FavoriteDelegate.qml
 EmptyMessage 1.0 EmptyMessage.qml
+StoreWarning 1.0 StoreWarning.qml
 AppTile 1.0 AppTile.qml

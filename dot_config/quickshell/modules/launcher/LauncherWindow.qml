@@ -89,6 +89,12 @@ PanelWindow {
             anchors.margins: Theme.panelPadding
             spacing: 10
 
+            StoreWarning {
+                Layout.fillWidth: true
+                message: LauncherState.storeProblem
+                onDismissed: LauncherState.dismissStoreProblem()
+            }
+
             SearchField {
                 id: search
                 Layout.fillWidth: true
