@@ -24,32 +24,31 @@ hl.window_rule({
     workspace = "2",
 })
 
--- Whatsapp and Telegram on 5
+-- Whatsapp and Telegram on 6
 hl.window_rule({
-    name = "whatsapp-on-workspace-7",
+    name = "whatsapp-on-workspace-6",
     match = { initial_class = "chrome-web.whatsapp.com__-Default" },
-    workspace = "5",
+    workspace = "6",
 })
 
 hl.window_rule({
     name = "telegram-on-workspace-7",
     match = { initial_class = "org.telegram.desktop" },
-    workspace = "5",
-})
-
--- Vesktop on 6
-hl.window_rule({
-    name = "vesktop-on-workspace-8",
-    match = { initial_class = "vesktop" },
     workspace = "6",
-    opacity = "1 1",
 })
 
--- Spotify on 8
+-- Vesktop on 9
+hl.window_rule({
+    name = "vesktop-on-workspace-9",
+    match = { initial_class = "vesktop" },
+    workspace = "9",
+})
+
+-- Spotify on 10
 hl.window_rule({
     name = "spotify-on-workspace-10",
     match = { initial_class = "chrome-spotify.com__-Default" },
-    workspace = "8",
+    workspace = "10",
 })
 
 -- LocalSend: ventana flotante (no reserva espacio en el tiling al abrir desde el tray)
@@ -64,7 +63,7 @@ hl.window_rule({
 hl.layer_rule({
     name = "quickshell-blur",
     match = { namespace = "quickshell" },
-    blur = true,
+    blur = false,
     ignore_alpha = 0,
 })
 

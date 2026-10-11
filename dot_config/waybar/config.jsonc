@@ -67,8 +67,7 @@
     },
     "persistent-only": true,
     "persistent-workspaces": {
-      "DP-1": [5,6,7,8],
-      "HDMI-A-1": [5,6,7,8]
+      "HDMI-A-1": [6,7,8,9,10]
     }
   },
   "hyprland/workspaces#left": {
@@ -89,8 +88,7 @@
     },
     "persistent-only": true,
     "persistent-workspaces": {
-      "DP-1": [1,2,3,4],
-      "HDMI-A-1": [1,2,3,4]
+      "DP-1": [1,2,3,4,5]
     }
   },
   "clock": {
