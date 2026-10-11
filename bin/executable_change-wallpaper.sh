@@ -51,6 +51,17 @@ function rotate_log() {
 
 rotate_log
 
+# Un cambio a la vez: dos clicks seguidos (o uno en cada barra) lanzaban dos
+# instancias que se pisaban el symlink, pywal y los procesos de mpvpaper. La
+# segunda espera a que termine la primera en vez de abortar, para que el
+# último click sea el que gana.
+LOCK_FILE="${XDG_RUNTIME_DIR:-/tmp}/change-wallpaper.lock"
+exec 9>"$LOCK_FILE"
+if ! flock -w 60 9; then
+  log ERROR "Otro cambio de fondo lleva más de 60 s en curso; abortando"
+  exit 1
+fi
+
 if [ -z "$1" ]; then
   log ERROR "No arguments passed"
   echo "Usage: $0 <image_path|video_path|scene_id> [--wal] [--lock-file]"
