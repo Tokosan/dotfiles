@@ -20,6 +20,12 @@ while [[ $# -gt 0 ]]; do
             MONITOR="${2:?--monitor necesita un nombre}"
             shift 2
             ;;
+        # Tras "--" todo es posicional: un archivo puede empezar con "-".
+        --)
+            shift
+            args+=("$@")
+            break
+            ;;
         *)
             args+=("$1")
             shift

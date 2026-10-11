@@ -1,17 +1,24 @@
 #!/bin/bash
-
-# This file must change the wallpaper to the selected image. It must have the following arguments:
-# $1: The path to the image file, a video file, or a Wallpaper Engine scene id
-# and the flags:
-# --wal: Must apply pywal
-# --lock-file: Must create a lockscreen file
+# Cambia el fondo de una pantalla (o de todas). Lo usan la grilla de
+# wallpapers de Quickshell y el teclado.
+#
+#   change-wallpaper.sh [opciones] [--] <imagen|vídeo|id-de-scene>
+#
+#   -m, --monitor <nombre|all>  Pantalla donde aplicarlo (por defecto: all)
+#   -w, --wal                   Recolorea el sistema con pywal
+#   -l, --lock-file             Apunta el lockscreen a la versión de este fondo
+#   --                          Fin de opciones (para rutas que empiezan con -)
 #
 # Acepta tres tipos de fondo:
 #   imagen  -> awww (estático)
-#   vídeo   -> mpvpaper, vía wallpaper-video
+#   vídeo   -> mpvpaper, vía wallpaper-video (.mp4, .webm, .mkv)
 #   scene   -> linux-wallpaperengine, vía wallpaper-scene (el id numérico)
 # pywal y el lockscreen necesitan una imagen fija: para vídeos y scenes se usa
-# la miniatura pregenerada por `pregenerate-thumbs`.
+# la miniatura pregenerada por `pregenerate-thumbs`. Ambos sólo actúan si la
+# pantalla es la del tema (THEME_MONITOR) o "all".
+#
+# Sale con 0 si el fondo quedó puesto y != 0 si no (pywal y el lockscreen son
+# secundarios: si fallan se avisa en el log pero no cambia el código).
 
 # El log va junto al estado de los fondos y no a /tmp: /tmp se borra al
 # reiniciar, justo cuando más interesa saber por qué no volvió un fondo.
@@ -62,11 +69,9 @@ if ! flock -w 60 9; then
   exit 1
 fi
 
-if [ -z "$1" ]; then
-  log ERROR "No arguments passed"
-  echo "Usage: $0 <image_path|video_path|scene_id> [--wal] [--lock-file]"
-  exit 1
-fi
+function usage() {
+  echo "Uso: ${0##*/} [-m <monitor|all>] [--wal] [--lock-file] [--] <imagen|vídeo|id-de-scene>" >&2
+}
 
 # Devuelve image, video o scene según lo que sea "$1".
 function detect_kind() {
@@ -101,7 +106,7 @@ function still_for() {
   case "$kind" in
     image) echo "$target" ;;
     video)
-      still="$THUMB_CACHE_DIR/video/$(basename "${target%.*}").jpg"
+      still="$THUMB_CACHE_DIR/video/$(basename -- "${target%.*}").jpg"
       [ -f "$still" ] && echo "$still"
       ;;
     scene)
@@ -164,7 +169,7 @@ function set_wallpaper() {
 
 function set_video() {
   log INFO "Setting video wallpaper on $2: $1"
-  if wallpaper-video start --monitor "$2" "$1" >/dev/null 2>&1; then
+  if wallpaper-video start --monitor "$2" -- "$1" >/dev/null 2>&1; then
     log INFO "Video wallpaper started"
   else
     log ERROR "Failed to start video wallpaper (exit code: $?)"
@@ -174,7 +179,7 @@ function set_video() {
 
 function set_scene() {
   log INFO "Setting Wallpaper Engine scene on $2: $1"
-  if wallpaper-scene start --monitor "$2" "$1" >/dev/null 2>&1; then
+  if wallpaper-scene start --monitor "$2" -- "$1" >/dev/null 2>&1; then
     log INFO "Scene started"
   else
     log ERROR "Failed to start scene (exit code: $?)"
@@ -210,7 +215,7 @@ function create_lock_file() {
   fi
 
   local base
-  base=$(basename "$source_image")
+  base=$(basename -- "$source_image")
   local cached="$LOCK_CACHE_DIR/$base"
 
   # Los estáticos tienen su lockscreen pregenerado por lotes. Las miniaturas de
@@ -243,33 +248,46 @@ function create_lock_file() {
 }
 
 function main() {
-  local target kind still rest=()
+  local target="" kind still wal=0 lock=0
 
-  target="$1"
-  shift
-
-  # --monitor puede venir en cualquier posición; el resto de flags se procesan
-  # después, cuando ya se sabe sobre qué pantalla se aplicó.
+  # Las opciones pueden ir antes o después del fondo. Se recogen todas antes
+  # de actuar porque pywal y el lockscreen dependen de la pantalla elegida.
   while [ $# -gt 0 ]; do
     case $1 in
       --monitor | -m)
         MONITOR="${2:?--monitor necesita un nombre}"
         shift 2
         ;;
+      --wal | -w) wal=1; shift ;;
+      --lock-file | -l) lock=1; shift ;;
+      --)
+        target="${2:-}"
+        shift $(($# > 1 ? 2 : 1))
+        ;;
+      -*)
+        log ERROR "Opción desconocida: $1"
+        usage
+        exit 2
+        ;;
       *)
-        rest+=("$1")
+        target="$1"
         shift
         ;;
     esac
   done
-  set -- "${rest[@]+"${rest[@]}"}"
+
+  if [ -z "$target" ]; then
+    log ERROR "Falta el fondo a aplicar"
+    usage
+    exit 2
+  fi
 
   # detect_kind corre en un subshell: su `exit 1` sólo termina el subshell,
   # así que hay que propagar el fallo a mano o seguiríamos con kind vacío.
   kind=$(detect_kind "$target") || exit 1
 
   # Una scene es un id, no una ruta: sólo las rutas se resuelven.
-  [ "$kind" != "scene" ] && target=$(readlink -f "$target")
+  [ "$kind" != "scene" ] && target=$(readlink -f -- "$target")
 
   still=$(still_for "$kind" "$target")
   log INFO "Tipo: $kind | monitor: $MONITOR | imagen fija: ${still:-(ninguna)}"
@@ -291,31 +309,14 @@ function main() {
       ;;
   esac
 
-  while [ $# -gt 0 ]; do
-    case $1 in
-      --wal | -w)
-        # El tema es global: sólo lo redefine la pantalla principal, para que
-        # cambiar el fondo de la otra no recoloree el escritorio entero.
-        if [ "$MONITOR" = "all" ] || [ "$MONITOR" = "$THEME_MONITOR" ]; then
-          apply_pywal "$still"
-        else
-          log INFO "Sin pywal: $MONITOR no es la pantalla del tema ($THEME_MONITOR)"
-        fi
-        ;;
-      --lock-file | -l)
-        if [ "$MONITOR" = "all" ] || [ "$MONITOR" = "$THEME_MONITOR" ]; then
-          create_lock_file "$still"
-        else
-          log INFO "Sin lockscreen: $MONITOR no es la pantalla del tema"
-        fi
-        ;;
-      *)
-        log WARN "Unknown flag: $1"
-        echo "Usage: $0 <image_path> [--wal] [--lock-file]"
-        ;;
-    esac
-    shift
-  done
+  # El tema es global: sólo lo redefine la pantalla principal, para que
+  # cambiar el fondo de la otra no recoloree el escritorio entero.
+  if [ "$MONITOR" = "all" ] || [ "$MONITOR" = "$THEME_MONITOR" ]; then
+    [ "$wal" = 1 ] && apply_pywal "$still"
+    [ "$lock" = 1 ] && create_lock_file "$still"
+  elif [ "$wal" = 1 ] || [ "$lock" = 1 ]; then
+    log INFO "Sin pywal ni lockscreen: $MONITOR no es la pantalla del tema ($THEME_MONITOR)"
+  fi
 
   log INFO "Wallpaper change completed"
 }
