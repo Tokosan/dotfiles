@@ -70,8 +70,11 @@ monitors() {
     esac
 }
 
+# El socket IPC de mpv va en el runtime dir del usuario (0700, se limpia al
+# cerrar sesión) y no en /tmp, donde otro usuario podría crearlo antes o
+# conectarse a él y mandarle comandos a mpv.
 socket_for() {
-    printf '/tmp/mpvpaper-%s.sock' "$1"
+    printf '%s/mpvpaper-%s.sock' "${XDG_RUNTIME_DIR:-/tmp}" "$1"
 }
 
 random_video() {
