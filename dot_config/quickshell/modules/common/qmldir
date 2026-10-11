@@ -1,0 +1,6 @@
+singleton Util 1.0 Util.qml
+BarPill 1.0 BarPill.qml
+BarText 1.0 BarText.qml
+Panel 1.0 Panel.qml
+TabBar 1.0 TabBar.qml
+SectionHeader 1.0 SectionHeader.qml
