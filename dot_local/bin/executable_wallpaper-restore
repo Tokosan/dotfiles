@@ -3,8 +3,11 @@
 # Se llama desde el autostart de Hyprland. Los estáticos no hacen falta:
 # awww-daemon ya restaura el último por su cuenta.
 #
-# El estado lo escriben wallpaper-scene y wallpaper-video en
-# ~/.local/state/wallpaper/<monitor>: "scene <id>", "video <ruta>" o "image".
+# El estado lo escriben change-wallpaper.sh, wallpaper-scene y wallpaper-video
+# en ~/.local/state/wallpaper/<monitor>: "scene <id>", "video <ruta>" o
+# "image <ruta>" (los archivos viejos pueden tener "image" sin ruta). En ese
+# directorio también vive change.log; no es una pantalla conectada, así que
+# el filtro de abajo lo salta.
 set -uo pipefail
 
 STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/wallpaper"
@@ -25,5 +28,7 @@ for file in "$STATE_DIR"/*; do
     case "$kind" in
         scene) wallpaper-scene start --monitor "$mon" "$value" ;;
         video) [[ -f "$value" ]] && wallpaper-video start --monitor "$mon" "$value" ;;
+        # El estático lo restaura awww-daemon; la ruta sólo le sirve a la grilla.
+        image) ;;
     esac
 done

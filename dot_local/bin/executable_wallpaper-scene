@@ -41,6 +41,14 @@ remember() {
     printf '%s\n' "$2" >"$STATE_DIR/$1"
 }
 
+# Imagen que awww tiene puesta en una pantalla, según `awww query`
+# (": DP-1: 1920x1080, scale: 1, currently displaying: image: /ruta").
+# Vacío si no hay ninguna o awww no responde.
+static_image() {
+    awww query 2>/dev/null | awk -v mon="$1" '
+        index($0, ": " mon ": ") == 1 && sub(/.*currently displaying: image: /, "") { print; exit }'
+}
+
 monitors() {
     case "$MONITOR" in
         all)
@@ -144,10 +152,13 @@ start() {
 }
 
 stop() {
-    local mon
+    local mon img
     for mon in $(monitors); do
         stop_monitor "$mon"
-        remember "$mon" "image"
+        # Con la ruta y no un "image" a secas: la grilla de Quickshell marca
+        # el fondo activo a partir de este archivo.
+        img="$(static_image "$mon")"
+        remember "$mon" "image${img:+ $img}"
         printf 'Scene detenida en %s\n' "$mon"
     done
     awww restore 2>/dev/null || true

@@ -122,6 +122,27 @@ function create_link() {
   log INFO "Created symlink: $LN_PATH -> $1"
 }
 
+# Pantallas sobre las que actúa un --monitor: "all" son todas las conectadas.
+function monitors_of() {
+  if [ "$1" = "all" ]; then
+    hyprctl monitors -j 2>/dev/null |
+      python3 -c 'import json,sys; [print(m["name"]) for m in json.load(sys.stdin)]' 2>/dev/null
+  else
+    printf '%s\n' "$1"
+  fi
+}
+
+# Anota el fondo estático de cada pantalla en $STATE_DIR/<monitor>, el mismo
+# archivo donde wallpaper-video y wallpaper-scene anotan los animados. Es la
+# fuente de verdad del fondo actual: la grilla de Quickshell lo lee para
+# marcar el activo y wallpaper-restore para relanzar los animados.
+function remember_image() {
+  local image="$1" mon
+  for mon in $(monitors_of "$MONITOR"); do
+    printf 'image %s\n' "$image" >"$STATE_DIR/$mon"
+  done
+}
+
 function set_wallpaper() {
   local mon="$1"
   log INFO "Setting wallpaper via awww on $mon"
@@ -260,6 +281,7 @@ function main() {
     image)
       create_link "$target"
       set_wallpaper "$MONITOR" || exit 1
+      remember_image "$target"
       ;;
     video)
       set_video "$target" "$MONITOR" || exit 1
