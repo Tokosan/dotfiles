@@ -13,7 +13,12 @@
 # pywal y el lockscreen necesitan una imagen fija: para vídeos y scenes se usa
 # la miniatura pregenerada por `pregenerate-thumbs`.
 
-LOG_FILE="/tmp/change-wallpaper.log"
+# El log va junto al estado de los fondos y no a /tmp: /tmp se borra al
+# reiniciar, justo cuando más interesa saber por qué no volvió un fondo.
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/wallpaper"
+LOG_FILE="$STATE_DIR/change.log"
+# Al pasar de este tamaño se rota a change.log.1 (se guarda una sola copia).
+LOG_MAX_BYTES=$((256 * 1024))
 LN_PATH=~/media/images/wallpapers/unsorted/current-wallpaper
 LOCK_LN_PATH=~/media/images/wallpapers/unsorted/current-lockscreen
 LOCK_CACHE_DIR=~/.cache/lockscreens
@@ -24,13 +29,27 @@ THEME_MONITOR="DP-1"
 MONITOR="all"
 WORKSHOP_DIR=~/.local/share/Steam/steamapps/workshop/content/431960
 
+# Escribe a stderr y al archivo, nunca a stdout: las funciones que se llaman
+# con $(...) devuelven su resultado por stdout, y un log ahí lo ensuciaría
+# (antes un "File not found" terminaba guardado como el tipo de fondo).
 function log() {
   local level="$1"
   shift
   local timestamp
   timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-  echo "[$timestamp] [$level] $*" | tee -a "$LOG_FILE"
+  echo "[$timestamp] [$level] $*" | tee -a "$LOG_FILE" >&2
 }
+
+function rotate_log() {
+  mkdir -p "$STATE_DIR"
+  local size
+  size=$(stat -c %s "$LOG_FILE" 2>/dev/null || echo 0)
+  if [ "$size" -gt "$LOG_MAX_BYTES" ]; then
+    mv -f "$LOG_FILE" "$LOG_FILE.1"
+  fi
+}
+
+rotate_log
 
 if [ -z "$1" ]; then
   log ERROR "No arguments passed"
@@ -107,6 +126,7 @@ function set_wallpaper() {
     log INFO "Wallpaper set successfully"
   else
     log ERROR "Failed to set wallpaper (awww exit code: $?)"
+    return 1
   fi
 }
 
@@ -116,6 +136,7 @@ function set_video() {
     log INFO "Video wallpaper started"
   else
     log ERROR "Failed to start video wallpaper (exit code: $?)"
+    return 1
   fi
 }
 
@@ -125,6 +146,7 @@ function set_scene() {
     log INFO "Scene started"
   else
     log ERROR "Failed to start scene (exit code: $?)"
+    return 1
   fi
 }
 
@@ -210,7 +232,9 @@ function main() {
   done
   set -- "${rest[@]+"${rest[@]}"}"
 
-  kind=$(detect_kind "$target")
+  # detect_kind corre en un subshell: su `exit 1` sólo termina el subshell,
+  # así que hay que propagar el fallo a mano o seguiríamos con kind vacío.
+  kind=$(detect_kind "$target") || exit 1
 
   # Una scene es un id, no una ruta: sólo las rutas se resuelven.
   [ "$kind" != "scene" ] && target=$(readlink -f "$target")
@@ -218,16 +242,19 @@ function main() {
   still=$(still_for "$kind" "$target")
   log INFO "Tipo: $kind | monitor: $MONITOR | imagen fija: ${still:-(ninguna)}"
 
+  # Si el fondo no se pudo poner se sale con error sin tocar pywal ni el
+  # lockscreen: quien llama (la grilla de Quickshell) usa el código de salida
+  # para decidir si marcar el fondo como aplicado.
   case "$kind" in
     image)
       create_link "$target"
-      set_wallpaper "$MONITOR"
+      set_wallpaper "$MONITOR" || exit 1
       ;;
     video)
-      set_video "$target" "$MONITOR"
+      set_video "$target" "$MONITOR" || exit 1
       ;;
     scene)
-      set_scene "$target" "$MONITOR"
+      set_scene "$target" "$MONITOR" || exit 1
       ;;
   esac
 
