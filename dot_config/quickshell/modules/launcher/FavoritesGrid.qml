@@ -64,6 +64,15 @@ Item {
         }
     }
 
+    // Un favorito oculto por no encontrarse su .desktop vuelve a verse si la
+    // app se instala con el launcher abierto (y uno desinstalado se va).
+    Connections {
+        target: DesktopEntries.applications
+        function onValuesChanged() {
+            root.sync();
+        }
+    }
+
     GridView {
         id: grid
         anchors.fill: root
