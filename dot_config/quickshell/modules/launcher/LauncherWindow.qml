@@ -113,34 +113,10 @@ PanelWindow {
                 onTabPressed: window.selectTab(window.showingAll ? "favs" : "all")
             }
 
-            RowLayout {
+            LauncherTabs {
                 Layout.fillWidth: true
-
-                TabBar {
-                    tabs: [
-                        {
-                            id: "favs",
-                            label: "Favorites"
-                        },
-                        {
-                            id: "all",
-                            label: "All"
-                        }
-                    ]
-                    current: window.showingAll ? "all" : "favs"
-                    onSelected: id => window.selectTab(id)
-                }
-
-                Item {
-                    Layout.fillWidth: true
-                }
-
-                Text {
-                    text: window.showingAll ? "Right-click: toggle favorite" : "Drag to reorder · Right-click: remove"
-                    color: Colors.textFaint
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontXs
-                }
+                showingAll: window.showingAll
+                onSelected: id => window.selectTab(id)
             }
 
             Item {
