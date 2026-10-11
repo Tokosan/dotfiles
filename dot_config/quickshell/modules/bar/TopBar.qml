@@ -109,7 +109,9 @@ PanelWindow {
     VolumeMixer {
         id: volumeMixer
         anchors.top: content.bottom
-        anchors.topMargin: Theme.dropdownGap
+        // Baja lo que haya crecido el monitor de sistema: expandido cuelga
+        // más que la fila y el mezclador, que es ancho, quedaría debajo.
+        anchors.topMargin: Theme.dropdownGap + Math.max(0, systemMonitor.height - Theme.barHeight)
         anchors.right: content.right
         // Alineado con el borde derecho de la pill de volumen.
         anchors.rightMargin: content.width - volumeWidget.x - volumeWidget.width
