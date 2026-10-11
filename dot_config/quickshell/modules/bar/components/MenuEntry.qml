@@ -9,6 +9,10 @@ MouseArea {
     required property string icon
     required property string label
 
+    // Esperando confirmación: se tiñe de alerta para que se note que el
+    // siguiente click sí ejecuta.
+    property bool armed: false
+
     signal triggered
 
     implicitHeight: 26
@@ -37,7 +41,7 @@ MouseArea {
         Text {
             text: entry.icon
             // Las entradas sin implementar se muestran atenuadas.
-            color: entry.enabled ? (entry.containsMouse ? Colors.accent : Colors.foreground) : Qt.alpha(Colors.foreground, 0.3)
+            color: !entry.enabled ? Qt.alpha(Colors.foreground, 0.3) : entry.armed ? Colors.alert : entry.containsMouse ? Colors.accent : Colors.foreground
             font.family: "JetBrains Mono Nerd Font"
             font.pixelSize: 12
 
@@ -53,7 +57,7 @@ MouseArea {
 
             text: entry.label
             elide: Text.ElideRight
-            color: entry.enabled ? Colors.foreground : Qt.alpha(Colors.foreground, 0.3)
+            color: !entry.enabled ? Qt.alpha(Colors.foreground, 0.3) : entry.armed ? Colors.alert : Colors.foreground
             font.family: "JetBrains Mono Nerd Font"
             font.pixelSize: 11
         }

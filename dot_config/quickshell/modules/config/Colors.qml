@@ -51,6 +51,9 @@ Singleton {
     readonly property color panelBackground: root.background
     readonly property color panelBorder: Qt.alpha(root.foreground, 0.38)
     readonly property color panelShadow: "#000000"
+    // Velo detrás de los paneles a pantalla completa (launcher): separa la
+    // tarjeta del escritorio sin taparlo del todo.
+    readonly property color overlayDim: Qt.alpha("#000000", 0.35)
 
     // Relleno de carga de las pills de sistema, con los mismos tramos que
     // waybar. Son fijos y no de pywal: el código de color verde/amarillo/rojo

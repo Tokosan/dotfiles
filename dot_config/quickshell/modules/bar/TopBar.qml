@@ -4,6 +4,7 @@ import Quickshell.Hyprland
 import QtQuick.Layouts
 
 import "./components/"
+import "../launcher/"
 
 PanelWindow {
     id: topPanel
@@ -73,6 +74,8 @@ PanelWindow {
 
         property bool open: false
 
+        onCloseRequested: globalMenu.open = false
+
         anchors.top: content.bottom
         anchors.topMargin: 6
         anchors.left: content.left
@@ -88,6 +91,14 @@ PanelWindow {
                 duration: 160
             }
         }
+    }
+
+    // Cierra el menú al hacer click fuera de la barra. Los clicks dentro del
+    // panel (incluida la estrella, que ya lo alterna) no cuentan como fuera.
+    HyprlandFocusGrab {
+        windows: [topPanel]
+        active: globalMenu.open
+        onCleared: globalMenu.open = false
     }
 
     // El mezclador va aquí y no dentro de Volume: colgado del borde inferior
@@ -138,6 +149,13 @@ PanelWindow {
                 // Las estrellitas salen desde el centro-bajo del botón.
                 starBurst.moveTo(starButton.x + starButton.width / 2, topPanel.barHeight - 6);
                 starBurst.fire(16);
+            }
+
+            // Se abre en esta pantalla, no en la enfocada: el click puede venir
+            // de un monitor que no tiene el foco.
+            onPrimaryAction: {
+                globalMenu.open = false;
+                LauncherState.toggle(topPanel.screen ? topPanel.screen.name : "");
             }
 
             onSecondaryAction: {

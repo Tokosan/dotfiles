@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import QtMultimedia
 
 import "../../config"
+import "../../launcher"
 
 Rectangle {
     id: menu
@@ -16,6 +17,9 @@ Rectangle {
     // "menu" muestra las opciones; "wallpaper" reemplaza el panel por la
     // grilla de miniaturas.
     property string view: "menu"
+
+    // El menú no sabe si está abierto: eso lo decide quien lo contiene.
+    signal closeRequested
 
     property real padding: 10
     property real radiusValue: 15
@@ -37,6 +41,7 @@ Rectangle {
 
     function reset() {
         menu.view = "menu";
+        menu.pendingAction = "";
     }
 
     // ── Vista: lista de opciones ──────────────────────────────────────
@@ -71,7 +76,10 @@ Rectangle {
             Layout.fillWidth: true
             icon: "\u{f002}"
             label: "Launcher"
-            enabled: false
+            onTriggered: {
+                menu.closeRequested();
+                LauncherState.show(menu.monitor);
+            }
         }
 
         MenuEntry {
@@ -83,10 +91,40 @@ Rectangle {
 
         MenuEntry {
             Layout.fillWidth: true
-            icon: "\u{f011}"
-            label: "Power off"
-            enabled: false
+            // nf-md-restart
+            icon: "\u{f0709}"
+            armed: menu.pendingAction === "reboot"
+            label: armed ? "Click again to reboot" : "Reboot"
+            onTriggered: menu.confirm("reboot", ["systemctl", "reboot"])
         }
+
+        MenuEntry {
+            Layout.fillWidth: true
+            icon: "\u{f011}"
+            armed: menu.pendingAction === "poweroff"
+            label: armed ? "Click again to shut down" : "Shutdown"
+            onTriggered: menu.confirm("poweroff", ["systemctl", "poweroff"])
+        }
+    }
+
+    // Apagar y reiniciar piden un segundo click: un click perdido en la barra
+    // no debería cerrar la sesión entera. La confirmación caduca sola.
+    property string pendingAction: ""
+
+    function confirm(action, command) {
+        if (menu.pendingAction === action) {
+            menu.pendingAction = "";
+            Quickshell.execDetached(command);
+            return;
+        }
+        menu.pendingAction = action;
+        confirmTimer.restart();
+    }
+
+    Timer {
+        id: confirmTimer
+        interval: 3000
+        onTriggered: menu.pendingAction = ""
     }
 
     // Mismo chime que el botón de la estrella, más suave.

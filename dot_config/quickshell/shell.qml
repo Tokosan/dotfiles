@@ -2,6 +2,7 @@ import Quickshell
 import QtQuick
 
 import "./modules/bar/"
+import "./modules/launcher/"
 
 ShellRoot {
     id: root
@@ -16,4 +17,7 @@ ShellRoot {
             screen: modelData
         }
     }
+
+    // Uno solo para todas las pantallas: se abre en la que tiene el foco.
+    Launcher {}
 }
