@@ -3,6 +3,8 @@ pragma Singleton
 import Quickshell
 import QtQuick
 
+import "../config"
+
 // Apps instaladas: la lista visible, la búsqueda y cómo se lanza cada una.
 // Vive aparte de la ventana para poder cambiar el ranking o el arranque sin
 // tocar la UI, y para no recalcular la lista en cada apertura.
@@ -26,10 +28,18 @@ Singleton {
     function launch(entry) {
         if (!entry)
             return;
-        // execute() no abre terminal para las apps que la necesitan.
-        if (entry.runInTerminal)
-            Quickshell.execDetached(["kitty", "-e"].concat(entry.command));
-        else
+        if (!entry.runInTerminal) {
             entry.execute();
+            return;
+        }
+        // execute() no abre terminal para las apps que la necesitan, así que
+        // se envuelve el comando con la terminal de Settings. El Path= del
+        // .desktop se respeta a mano por la misma razón.
+        const context = {
+            command: Settings.terminalCommand.concat(entry.command)
+        };
+        if (entry.workingDirectory)
+            context.workingDirectory = entry.workingDirectory;
+        Quickshell.execDetached(context);
     }
 }
