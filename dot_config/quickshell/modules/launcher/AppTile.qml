@@ -3,6 +3,7 @@ import Quickshell.Widgets
 import QtQuick
 
 import "../config"
+import "../common"
 
 // Solo la parte visual de una app: icono, nombre y fondo de hover. El mouse lo
 // maneja quien lo contiene, porque en favoritos además se arrastra.
@@ -30,13 +31,14 @@ Item {
         }
     }
 
-    // Algunos .desktop traen una ruta absoluta en vez de un nombre de tema.
+    // Algunos .desktop traen una ruta absoluta en vez de un nombre de tema;
+    // se pasa por Util.fileUrl para que un # o % en la ruta no la rompa.
     // Vacío si no hay icono: el tema que usa Qt (hicolor) tampoco trae el
     // genérico application-x-executable, así que no sirve como fallback.
     readonly property string iconSource: {
         const name = tile.entry?.icon ?? "";
         if (name.startsWith("/"))
-            return "file://" + name;
+            return Util.fileUrl(name);
         return name ? Quickshell.iconPath(name, true) : "";
     }
 
