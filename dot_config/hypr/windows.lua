@@ -10,6 +10,13 @@ hl.window_rule({
     opacity = "0.95 override 0.8 override 0.9 override",
 })
 
+hl.window_rule({
+    name = "quickshell-floating",
+    match = { initial_class = "org.quickshell" },
+    float = true,
+    no_initial_focus = true,
+})
+
 -- Firefox on 2
 hl.window_rule({
     name = "firefox-on-workspace-2",

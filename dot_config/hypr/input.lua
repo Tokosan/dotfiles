@@ -16,5 +16,7 @@ hl.config({
         accel_profile = "flat",
         natural_scroll = true,
         follow_mouse = 2,
+        -- # No cambiar el foco al pasar el mouse entre ventanas tiled y flotantes
+        float_switch_override_focus = 0,
     },
 })
