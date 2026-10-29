@@ -39,6 +39,11 @@ return {
             qmljs = { 'qmlformat' },
         },
         formatters = {
+            -- Group attributes per the QML Coding Conventions (id, properties, signals, ...)
+            -- without sorting them, so hand-written order and comments stay put
+            qmlformat = {
+                prepend_args = { '--group-attributes-together' },
+            },
             ruff_uv_fix = {
                 command = 'uv',
                 args = { 'run', 'ruff', 'check', '--fix', '--exit-zero', '--stdin-filename', '$FILENAME', '-' },

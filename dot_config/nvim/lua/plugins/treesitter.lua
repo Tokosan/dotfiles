@@ -18,6 +18,9 @@ return { -- Highlight, edit, and navigate code
       'typescript',
       'python',
       'qmljs',
+      'gdscript',
+      'gdshader',
+      'godot_resource',
     },
     auto_install = false,
     highlight = {
@@ -32,6 +35,9 @@ return { -- Highlight, edit, and navigate code
       local ok_ts, ts = pcall(require, 'nvim-treesitter')
       if ok_ts and type(ts.setup) == 'function' then
         ts.setup(opts)
+        -- En la rama main, ensure_installed no existe como opción: hay que
+        -- pedir la instalación explícitamente (no-op si ya están instalados).
+        ts.install(opts.ensure_installed)
       end
     end
 

@@ -185,10 +185,28 @@ return {
 
       vim.lsp.config('qmlls', {
         capabilities = capabilities,
-        cmd = { '/usr/bin/qmlls6', '-I', '/usr/lib/qt6/qml' },
+        -- qmlls doesn't resolve `import qs.<dir>` through the .qmlls.ini buildDir,
+        -- so pass Quickshell's VFS dir (written there by `qs`) as an import path too
+        cmd = function(dispatchers, config)
+          local args = { '/usr/bin/qmlls6', '-I', '/usr/lib/qt6/qml' }
+          local ini = config.root_dir and vim.fs.joinpath(config.root_dir, '.qmlls.ini')
+          if ini and vim.uv.fs_stat(ini) then
+            local build_dir = table.concat(vim.fn.readfile(ini), '\n'):match 'buildDir="([^"]+)"'
+            if build_dir then
+              vim.list_extend(args, { '-I', build_dir })
+            end
+          end
+          return vim.lsp.rpc.start(args, dispatchers, { cwd = config.root_dir })
+        end,
         root_markers = { '.qmlls.ini', '.git', 'CMakeLists.txt' },
       })
       vim.lsp.enable 'qmlls'
+
+      -- GDScript LSP lives inside the Godot editor (TCP 127.0.0.1:6005); it only works while Godot is open
+      vim.lsp.config('gdscript', {
+        capabilities = capabilities,
+      })
+      vim.lsp.enable 'gdscript'
 
       require('mason-tool-installer').setup {
         ensure_installed = {
