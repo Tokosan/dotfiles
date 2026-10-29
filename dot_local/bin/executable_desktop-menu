@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# Muestra un menu de apps con wofi al hacer click derecho sobre el escritorio.
+# Si el cursor esta sobre una ventana, no hace nada (deja pasar el click a la app).
+
+set -euo pipefail
+
+# Posicion actual del cursor
+read -r cx cy < <(hyprctl cursorpos | tr -d ',')
+
+# Workspace activo (para ignorar ventanas de otros workspaces)
+active_ws=$(hyprctl -j activeworkspace | jq '.id')
+
+# Comprueba si el cursor cae dentro de alguna ventana visible del workspace activo.
+# floating primero por si estan sobre las tiled.
+over_window=$(hyprctl -j clients | jq --argjson cx "$cx" --argjson cy "$cy" --argjson ws "$active_ws" '
+  [ .[]
+    | select(.workspace.id == $ws)
+    | select(.hidden == false)
+    | select(.mapped == true)
+    | select(($cx >= .at[0]) and ($cx < (.at[0] + .size[0]))
+         and ($cy >= .at[1]) and ($cy < (.at[1] + .size[1])))
+  ] | length')
+
+# Si hay una ventana bajo el cursor, salir sin hacer nada.
+if [ "$over_window" -gt 0 ]; then
+  exit 0
+fi
+
+# --- Menu de apps ---
+# Formato: "Etiqueta\0icon\x1f<nombre-icono>" opcional; aqui usamos texto simple.
+choice=$(printf '%s\n' \
+  "  Navegador (Zen)" \
+  "  Terminal (Kitty)" \
+  "  Terminal flotante" \
+  "  Archivos" \
+  "  Lanzador (rofi)" \
+  "  Bloquear pantalla" \
+  | wofi --dmenu \
+         --prompt "Escritorio" \
+         --width 300 --height 320 \
+         --cache-file /dev/null \
+         --insensitive)
+
+case "$choice" in
+  *"Zen"*)             fol-zen ;;
+  *"Kitty"*)           fol-kitty ;;
+  *"flotante"*)        hyprctl dispatch exec '[float; size 700 400] kitty' ;;
+  *"Archivos"*)        hyprctl dispatch exec thunar ;;
+  *"rofi"*)            rofi -show drun ;;
+  *"Bloquear"*)        hyprlock --grace 10 ;;
+  *)                   exit 0 ;;
+esac

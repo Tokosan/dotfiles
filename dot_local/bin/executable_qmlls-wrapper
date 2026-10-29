@@ -1,0 +1,46 @@
+#!/usr/bin/env python3
+# qmlls6 requiere \r\n en los headers LSP pero nvim envía \n.
+# Este wrapper intercepta stdin/stdout y convierte los headers.
+import sys
+import os
+import subprocess
+import threading
+
+def convert_to_crlf(data: bytes) -> bytes:
+    return data.replace(b'\r\n', b'\n').replace(b'\n', b'\r\n')
+
+def convert_to_lf(data: bytes) -> bytes:
+    return data.replace(b'\r\n', b'\n')
+
+def forward(src, dst, transform=None):
+    buf = b''
+    while True:
+        chunk = src.read(4096)
+        if not chunk:
+            break
+        if transform:
+            chunk = transform(chunk)
+        dst.write(chunk)
+        dst.flush()
+
+args = ['/usr/bin/qmlls6'] + sys.argv[1:]
+proc = subprocess.Popen(
+    args,
+    stdin=subprocess.PIPE,
+    stdout=subprocess.PIPE,
+    stderr=sys.stderr,
+)
+
+t_in = threading.Thread(
+    target=forward,
+    args=(sys.stdin.buffer, proc.stdin, convert_to_crlf),
+    daemon=True,
+)
+t_out = threading.Thread(
+    target=forward,
+    args=(proc.stdout, sys.stdout.buffer, convert_to_lf),
+    daemon=True,
+)
+t_in.start()
+t_out.start()
+proc.wait()

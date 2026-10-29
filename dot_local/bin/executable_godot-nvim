@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# External editor for Godot. Godot exec flags: {project} {file} {line} {col}
+# Opens the file in the project's nvim (reusing it if already running) inside kitty.
+project="${1%/}"; file="$2"; line="${3:-1}"; col="${4:-0}"
+[ "$line" -lt 1 ] 2>/dev/null && line=1
+col=$((col + 1))
+
+sock="${XDG_RUNTIME_DIR:-/tmp}/godot-nvim-$(printf '%s' "$project" | sha256sum | cut -c1-12)"
+
+if [ -S "$sock" ] && nvim --server "$sock" --remote-expr '1' >/dev/null 2>&1; then
+  esc="${file// /\\ }"
+  nvim --server "$sock" --remote-send "<C-\\><C-N>:drop ${esc}<CR>:call cursor(${line},${col})<CR>"
+  hyprctl dispatch focuswindow "class:godot-nvim" >/dev/null 2>&1 || true
+else
+  rm -f "$sock"
+  cd "$project" || exit 1
+  exec kitty --class godot-nvim --title "Godot: $(basename "$project")" \
+    nvim --listen "$sock" "+call cursor(${line},${col})" "$file"
+fi
