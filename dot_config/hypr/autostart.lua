@@ -1,11 +1,10 @@
 hl.on("hyprland.start", function()
     hl.exec_cmd("qs -p /home/tokosan/.config/quickshell")
-    hl.exec_cmd("awww-daemon")
-    -- Vuelve a poner la última scene o vídeo de cada pantalla.
-    hl.exec_cmd("wallpaper-restore")
-    hl.exec_cmd("dbus-update-activation-environment")
+    -- Los fondos los pone skwd-walld (servicio de systemd del usuario), que
+    -- también recuerda el último de cada pantalla.
+    -- Exporta el entorno gráfico a systemd y activa graphical-session.target
+    -- (necesario para Sunshine y wayvnc, ya que Hyprland no se lanza con uwsm).
+    hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY DISPLAY HYPRLAND_INSTANCE_SIGNATURE XDG_CURRENT_DESKTOP XDG_SESSION_TYPE && systemctl --user start hyprland-session.target")
     hl.exec_cmd("steam -silent")
-    -- Fondo animado: descomentar cuando haya vídeos en ~/media/videos/wallpapers
-    -- hl.exec_cmd("wallpaper-video start")
     -- hl.exec_cmd("sleep 1 && hyprlock")
 end)
