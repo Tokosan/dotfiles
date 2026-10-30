@@ -9,4 +9,68 @@ hl.workspace_rule({ workspace = "7", monitor = "HDMI-A-1", persistent = true })
 hl.workspace_rule({ workspace = "8", monitor = "HDMI-A-1", persistent = true })
 hl.workspace_rule({ workspace = "9", monitor = "HDMI-A-1", persistent = true })
 hl.workspace_rule({ workspace = "10", monitor = "HDMI-A-1", persistent = true })
+{{- else -}}
+-- El reparto depende de las pantallas encendidas (monitors.lua apaga la
+-- interna con la tapa cerrada): una sola recibe los 10 workspaces; con dos,
+-- la de la izquierda tiene 1-5 y la otra 6-10. Con más de dos se ignora la
+-- interna.
+local internal = "{{ .monitor }}"
+
+local function target_monitors()
+    local screens = hl.get_monitors()
+    if #screens > 2 then
+        for i, m in ipairs(screens) do
+            if m.name == internal then
+                table.remove(screens, i)
+                break
+            end
+        end
+    end
+    table.sort(screens, function(a, b)
+        return a.x < b.x
+    end)
+    return screens
+end
+
+local function target_for(id, screens)
+    if #screens == 1 or id <= 5 then
+        return screens[1]
+    end
+    return screens[2]
+end
+
+local function place(id, screens)
+    local ws = hl.get_workspace(id)
+    local target = target_for(id, screens)
+    if ws and target and ws.monitor and ws.monitor.name ~= target.name then
+        hl.dispatch(hl.dsp.workspace.move({ workspace = tostring(id), monitor = target.name }))
+    end
+end
+
+local function arrange()
+    local screens = target_monitors()
+    if #screens == 0 then
+        return
+    end
+    for id = 1, 10 do
+        place(id, screens)
+    end
+end
+
+local function arrange_later()
+    hl.timer(arrange, { timeout = 500, type = "oneshot" })
+end
+
+hl.on("hyprland.start", arrange_later)
+hl.on("config.reloaded", arrange_later)
+hl.on("monitor.added", arrange_later)
+hl.on("monitor.removed", arrange_later)
+hl.on("workspace.created", function(ws)
+    if ws and ws.id and ws.id >= 1 and ws.id <= 10 then
+        local screens = target_monitors()
+        if #screens > 0 then
+            place(ws.id, screens)
+        end
+    end
+end)
 {{- end }}

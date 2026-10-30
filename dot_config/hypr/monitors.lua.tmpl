@@ -1,10 +1,57 @@
 {{- if .laptop -}}
-hl.monitor({
-    output = "eDP-1",
+local internal = {
+    output = "{{ .monitor }}",
     mode = "preferred",
     position = "0x0",
     scale = "auto",
-})
+}
+
+local function lid_closed()
+    local f = io.open("/proc/acpi/button/lid/LID/state")
+    if not f then
+        return false
+    end
+    local state = f:read("*a")
+    f:close()
+    return state:find("closed") ~= nil
+end
+
+local function has_external()
+    for _, m in ipairs(hl.get_monitors()) do
+        if m.name ~= internal.output then
+            return true
+        end
+    end
+    return false
+end
+
+-- Con la tapa cerrada y alguna pantalla externa, se apaga la interna. Sin
+-- externas se deja encendida para no quedar sin pantalla.
+local internal_disabled = nil
+local function apply_lid()
+    local disabled = lid_closed() and has_external()
+    if disabled == internal_disabled then
+        return
+    end
+    internal_disabled = disabled
+    hl.monitor({
+        output = internal.output,
+        mode = internal.mode,
+        position = internal.position,
+        scale = internal.scale,
+        disabled = disabled,
+    })
+end
+
+local function apply_lid_later()
+    hl.timer(apply_lid, { timeout = 200, type = "oneshot" })
+end
+
+apply_lid()
+hl.on("monitor.added", apply_lid_later)
+hl.on("monitor.removed", apply_lid_later)
+hl.bind("switch:on:Lid Switch", apply_lid_later, { locked = true })
+hl.bind("switch:off:Lid Switch", apply_lid_later, { locked = true })
 {{- else -}}
 hl.monitor({
     output = "DP-1",
