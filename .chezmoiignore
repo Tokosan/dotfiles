@@ -7,3 +7,12 @@
 .config/quickshell/CLAUDE.md
 .config/quickshell/check.sh
 .config/quickshell/DESHACER.md
+{{- if .laptop }}
+# Streaming y acceso remoto: sólo en el escritorio.
+.config/sunshine
+.config/wayvnc
+.config/systemd/user/sunshine.service
+.config/systemd/user/wayvnc.service
+.config/systemd/user/graphical-session.target.wants
+.config/systemd/user/graphical-session.target.wants/**
+{{- end }}
