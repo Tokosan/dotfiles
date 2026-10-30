@@ -18,5 +18,25 @@ hl.config({
         follow_mouse = 2,
         -- # No cambiar el foco al pasar el mouse entre ventanas tiled y flotantes
         float_switch_override_focus = 0,
+{{- if .laptop }}
+
+        -- # ------ Touchpad ------
+        touchpad = {
+            natural_scroll = true,
+            tap_to_click = true,
+            disable_while_typing = true,
+            -- # Dos dedos = click derecho, tres = medio (en vez de zonas del pad)
+            clickfinger_behavior = true,
+        },
+{{- end }}
     },
 })
+{{- if .laptop }}
+
+-- # Tres dedos en horizontal cambian de workspace
+hl.gesture({
+    fingers = 3,
+    direction = "horizontal",
+    action = "workspace",
+})
+{{- end }}

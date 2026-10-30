@@ -1,0 +1,14 @@
+{{- /* Datos por equipo. Se recalculan con `chezmoi init`. */ -}}
+{{- /* Es laptop si tiene batería. */ -}}
+{{- $laptop := gt (len (glob "/sys/class/power_supply/BAT*")) 0 -}}
+[data]
+    laptop = {{ $laptop }}
+{{- if $laptop }}
+    # Pantalla interna; las externas entran por la regla genérica de monitors.lua.
+    monitor = "eDP-1"
+    # Capturas y grabaciones.
+    media = "~/media"
+{{- else }}
+    monitor = "DP-1"
+    media = "~/drives/hdd/media"
+{{- end }}

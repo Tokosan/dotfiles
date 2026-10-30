@@ -89,7 +89,7 @@ hl.bind(mainMod .. " + SHIFT + T", hl.dsp.exec_cmd(terminal .. " -e btop"), { de
 hl.bind(mainMod .. " + SHIFT + O", hl.dsp.exec_cmd("obsidian"), { desc = "Obsidian" })
 
 -- Tools
-hl.bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd("hyprshot -m region --output-folder ~/drives/hdd/media/images/hyprshot"), { desc = "Take screenshot" })
+hl.bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd("hyprshot -m region --output-folder {{ .media }}/images/hyprshot"), { desc = "Take screenshot" })
 hl.bind(mainMod .. " + CONTROL + SPACE", hl.dsp.exec_cmd("skwd-helm random"), { desc = "Random wallpaper" })
-hl.bind(mainMod .. " + R", hl.dsp.exec_cmd('gpu-screen-recorder -w DP-1 -f 30 -a default_output -o ~/drives/hdd/media/videos/screenrecord/$(date +%Y-%m-%d_%H-%M-%S).mp4 & notify-send "Recording Started"'), { desc = "Start recording" })
+hl.bind(mainMod .. " + R", hl.dsp.exec_cmd('mkdir -p {{ .media }}/videos/screenrecord && gpu-screen-recorder -w {{ .monitor }} -f 30 -a default_output -o {{ .media }}/videos/screenrecord/$(date +%Y-%m-%d_%H-%M-%S).mp4 & notify-send "Recording Started"'), { desc = "Start recording" })
 hl.bind(mainMod .. " + CONTROL + R", hl.dsp.exec_cmd('killall -SIGINT gpu-screen-recorder && notify-send "Recording Stopped"'), { desc = "Stop recording" })
