@@ -1,8 +1,20 @@
 {{- if ne .chezmoi.os "linux" }}
+# Escritorio Linux (Hyprland, quickshell, wallpapers, servicios): no aplica en macOS.
 .config/hypr
 .config/waybar
 .config/rofi
 .config/swaync
+.config/quickshell
+.config/themes
+.config/systemd
+.config/sunshine
+.config/wayvnc
+.config/yay
+.config/cava
+.config/qmk
+.config/bonsai
+bin
+.local/bin
 {{- end }}
 .config/quickshell/CLAUDE.md
 .config/quickshell/check.sh
