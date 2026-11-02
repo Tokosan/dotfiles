@@ -5,5 +5,10 @@ return {
   keys = {
     { '<leader>mdt', '<cmd>RenderMarkdown toggle<cr>', ft = 'markdown', desc = 'Markdown: toggle render' },
   },
-  opts = {},
+  opts = {
+    completions = { lsp = { enabled = true } },
+    code = { sign = false, width = 'block', right_pad = 1 },
+    heading = { sign = false },
+    checkbox = { enabled = true },
+  },
 }

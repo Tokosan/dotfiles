@@ -50,3 +50,8 @@
 confirm-close-surface=false
 font-family = "Hack Nerd Font Mono"
 theme = Catppuccin Mocha
+custom-shader = shaders/cursor_warp.glsl
+background-opacity = 0.95
+{{- if eq .chezmoi.os "darwin" }}
+keybind = global:cmd+backquote=toggle_quick_terminal
+{{- end }}

@@ -208,6 +208,10 @@ return {
       })
       vim.lsp.enable 'gdscript'
 
+      vim.lsp.config('marksman', {
+        capabilities = capabilities,
+      })
+
       require('mason-tool-installer').setup {
         ensure_installed = {
           'stylua',
@@ -217,10 +221,11 @@ return {
           'typescript-language-server',
           'eslint_d',
           'prettierd',
+          'marksman',
         },
       }
       require('mason-lspconfig').setup {
-        ensure_installed = { 'lua_ls', 'basedpyright', 'ts_ls' },
+        ensure_installed = { 'lua_ls', 'basedpyright', 'ts_ls', 'marksman' },
       }
     end,
   },

@@ -37,6 +37,19 @@ vim.api.nvim_create_autocmd({ 'BufNewFile', 'BufRead', 'BufEnter' }, {
   end,
 })
 
+-- Markdown: wrap lines at word boundaries and enable spell check
+vim.api.nvim_create_autocmd('FileType', {
+  desc = 'Markdown editing settings',
+  group = vim.api.nvim_create_augroup('kickstart-markdown', { clear = true }),
+  pattern = 'markdown',
+  callback = function()
+    vim.opt_local.wrap = true
+    vim.opt_local.linebreak = true
+    vim.opt_local.spell = true
+    vim.opt_local.spelllang = { 'es', 'en' }
+  end,
+})
+
 -- Set QML tabs to 4 (matches qmlformat, which runs on save)
 vim.api.nvim_create_autocmd({ 'BufNewFile', 'BufRead', 'BufEnter' }, {
   desc = 'Set QML tabs to 4',
